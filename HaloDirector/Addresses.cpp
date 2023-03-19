@@ -176,15 +176,15 @@ void Halo::Initialise() {
     //CameraHookAddress = Scan(L"halo3.dll", "\xf3\x41\x00\x00\x00\xf3\x0f\x59\x00\x00\x00\x00\x00\xf3\x0f\x11\x00\x00\xf3\x0f\x59\x00\xf3\x0f\x58", "xx???xxx?????xxx??xxx?xxx") + 13;
 
 	//good as of 2845
-    CameraHookAddress = Scan(L"halo3.dll", "\xf3\x0F\x00\x00\xf3\x0f\x11\x00\x00\xf3\x0f\x59\x00\xf3\x0f\x59\x00\xf3\x0f\x58", "xx??xxx??xxx?xxx?xxx") + 4;
-    
-    if (CameraHookAddress < 0x1000)
-    {
-        Log::Error("Unable to find address: CameraHookAddress");
-    }
-    else {
-        Log::Info("Camera Hook Address: %llx", CameraHookAddress);
-    }
+    //CameraHookAddress = Scan(L"halo3.dll", "\xf3\x0F\x00\x00\xf3\x0f\x11\x00\x00\xf3\x0f\x59\x00\xf3\x0f\x59\x00\xf3\x0f\x58", "xx??xxx??xxx?xxx?xxx") + 4;
+    //
+    //if (CameraHookAddress < 0x1000)
+    //{
+    //    Log::Error("Unable to find address: CameraHookAddress");
+    //}
+    //else {
+    //    Log::Info("Camera Hook Address: %llx", CameraHookAddress);
+    //}
 
 
     Log::Info("---------- Getting HWND -----------");

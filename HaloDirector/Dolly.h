@@ -7,12 +7,16 @@ static class Dolly
 {
 public:
 	static CameraMarker markers[MAX_DOLLY_MARKERS];
+	static unsigned long long time;
+	static unsigned long tick;
 	static int count;
 	static void play();
 	static void ToggleDolly();
 	static bool IsDollying();
 	static void update(int arg);
 	static void addMarker();
+	static void Pause();
+	static void Resume();
 	static void removeMarker(int index);
 	static void removeSelected();
 	static void removeAll();
@@ -28,3 +32,28 @@ public:
 	static void EditMarker();
 };
 
+namespace DollyCam
+{
+	struct CamNode
+	{
+		CameraMarker *t;
+		CamNode* next;
+		CamNode* prev;
+	};
+	void MainFunction();
+	bool Update();
+	void AddMarker();
+	void SetMarker(CameraMarker* cameraMarker, long long time_tick);
+	bool RemoveNode(CamNode *node);
+	bool RemoveClosestNode();
+	bool BetweenMarkers();
+	Vector3 GetPositionForCurrentTime();
+	CamNode* GetClosestNode();
+	CamNode* GetHeaderNode();
+	CamNode* GetNodeByIndex(size_t index);
+	bool Playing();
+	void Play();
+	void Pause();
+	void Restart();
+	void Init(uintptr_t module, uintptr_t teb);
+}

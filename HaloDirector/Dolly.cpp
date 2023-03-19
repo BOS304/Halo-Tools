@@ -8,6 +8,8 @@ float start_time = 0.0f;
 CameraMarker Dolly::markers[MAX_DOLLY_MARKERS];
 int Dolly::count = 0;
 
+unsigned long Dolly::tick = 60;
+unsigned long long Dolly::time = 0;
 
 bool doDolly = false;
 bool dollyStarted = false;
@@ -24,37 +26,24 @@ float alpha = 0.0f;
 
 void Dolly::play()
 {
-	if (*serverTime < markers[0].time)
+	if (count >= 2)
 	{
-		if (count >= 2)
-		{
-			doDolly = true;
+		doDolly = true;
 
-			//SkipToNextMarker();
-
-			UI::SetText(UI_PLAY_DOLLY, "Stop Dolly");
-		}
-		else {
-			UI::Error(UI_PLAY_DOLLY, "Error: Require atleast 2 markers for dolly");
-		}
+		UI::SetText(UI_PLAY_DOLLY, "Stop Dolly");
 	}
 	else {
-		UI::Error(UI_PLAY_DOLLY, "Error: Playback must be before first dolly marker in timeline");
+		UI::Error(UI_PLAY_DOLLY, "Error: Require atleast 2 markers for dolly");
 	}
-
 }
 
 void InitDolly() {
-	start_time_real = *serverSeconds;
+
 	start_time = *serverTime;
 
-	Log::Info("Beginning Dolly Cam");
+	Dolly::time = 0;
 
-	for (int i = 0; i < Dolly::count; i++)
-	{
-		float time_diff = Dolly::markers[i].time - Dolly::markers[0].time;
-		Dolly::markers[i].time_relative = time_diff;
-	}
+	Log::Info("Beginning Dolly Cam");
 }
 
 void demo_stop_dolly(int arg)
@@ -92,7 +81,7 @@ void Dolly::update(int arg)
 	for (int i = 0; i < Dolly::count; i++)
 	{
 		//if between two markers:
-		if (*serverTime > Dolly::markers[i].time && *serverTime < Dolly::markers[i + 1].time)
+		if (time > Dolly::markers[i].time && time < Dolly::markers[i + 1].time)
 		{
 			CameraMarker* m0;
 			CameraMarker* m1;
@@ -168,6 +157,7 @@ void Dolly::update(int arg)
 			*fov =									Math::CosineInterpolate(m1->fov, m2->fov, alpha);
 			break;
 		}
+		time += tick;
 	}
 }
 
@@ -229,6 +219,15 @@ void Dolly::addMarker()
 		UI::Error(UI_CREATE_MARKER, "Error: A camera marker already exists at the current time.");
 		//MessageBox(0, L"A Camera Marker already exists at the current time.", L"Error:", NULL);
 	}
+}
+
+void Dolly::Pause()
+{
+
+}
+
+void Dolly::Resume()
+{
 }
 
 bool Dolly::BetweenMarkers() {
@@ -517,7 +516,7 @@ DWORD __stdcall Dolly::Loop(LPVOID Param)
 			{
 				if (Dolly::count > 1)
 				{
-					if (dollyStarted == false && *serverTime > Dolly::markers[0].time)
+					if (dollyStarted == false)
 					{
 						dollyStarted = true;
 						InitDolly();
@@ -564,4 +563,296 @@ void Dolly::Initialise() {
 	ConsoleCommands::Add("demo_test", &demo_test);
 
 	CreateThread(0, 0, &Dolly::Loop, 0, 0, 0);
+}
+
+
+namespace DollyCam
+{
+	CamNode* head = NULL;
+	CamNode* current_node = NULL;
+	bool bplay = false;
+	long long speed_tick = 60;
+	long long current_tick_dolly = 0;
+	long long begin_tick = 0;
+	unsigned long* tickTime;
+
+	static __int64* TEBAddress;
+	static __int64 hModule;
+	__int32 TlsIndex;
+
+	void Init(uintptr_t module, uintptr_t teb)
+	{
+		hModule = module;
+		TEBAddress = (__int64*)teb;
+		TlsIndex = *(__int32*)(hModule + 0xA2A09C);
+		tickTime = (unsigned long*)(*(__int64*)(*(__int64*)(TEBAddress + TlsIndex) + 0xC8i64) + 0xC);
+
+		CamNode* node = head;
+		CamNode* next = NULL;
+		while (node != NULL)
+		{
+			next = node->next;
+			free(node);
+			node = next;
+		}
+		head = NULL;
+		bplay = false;
+		begin_tick = 0;
+	}
+
+	void MainFunction()
+	{
+		if (bplay)
+		{
+			if (Update())
+			{
+				current_tick_dolly++;
+			}
+		}
+	}
+
+	bool Update()
+	{
+		CamNode *m0, *m1, *m2, *m3;
+		CamNode *node = NULL;
+		int i = 0;
+
+		if (current_node == NULL || current_node->next == NULL) return false;
+
+		node = m0 = m1 = m2 = m3 = current_node;
+		if (current_node->prev != NULL) m0 = current_node->prev;
+		while (i < 3)
+		{
+			if (i == 1) m2 = node;
+			if (i == 2) m3 = node;
+			if (node->next != NULL) node = node->next;
+			i++;
+		}
+
+		//We gotta do it like this to break free from the game's horrible tick rate
+		float current_time_relative = current_tick_dolly - node->t->time_relative;
+		float alpha = current_time_relative / (node->next->t->time_relative - node->t->time_relative);
+
+		//lerp position
+		Cam->position = Math::CatmullRomInterpolate(
+			m0->t->position,
+			m1->t->position,
+			m2->t->position,
+			m3->t->position,
+			alpha,
+			0.0f);
+
+		//lerp forward position and then look at it. idk cod did it like this 
+		Vector3 forward = Math::CatmullRomInterpolate(
+			m0->t->forward,
+			m1->t->forward,
+			m2->t->forward,
+			m3->t->forward,
+			alpha,
+			0.0f);
+
+		Cam->rotation = Math::LookAt(Cam->position, forward);
+
+		//we just gonna use cosine interpolation for these because Catmullrom was being fucky. ill come back to this
+		Cam->rotation.z = Math::CosineInterpolate(m1->t->roll, m2->t->roll, alpha);
+		*fov = Math::CosineInterpolate(m1->t->fov, m2->t->fov, alpha);
+
+		return true;
+	}
+
+	void AddMarker()
+	{
+		CameraMarker* _new_marker_ = new CameraMarker;
+		CamNode* _new_node_ = new CamNode;
+		long long current_tick = *tickTime;
+		long long time_tick_relative = current_tick - begin_tick;
+
+		Log::Debug("_new_node_:%llX\n", _new_node_);
+
+		memset(_new_marker_, 0, sizeof(CameraMarker));
+		memset(_new_node_, 0, sizeof(CamNode));
+		_new_node_->t = _new_marker_;
+		//New Chain
+		if (head == NULL)
+		{
+			begin_tick = current_tick;
+			SetMarker(_new_marker_, current_tick);
+			head = _new_node_;
+			Log::Debug("Head:%llX\n", head);
+			return;
+		}
+		//
+		if (time_tick_relative < head->t->time_relative)
+		{
+			begin_tick = current_tick;
+			SetMarker(_new_marker_, current_tick);
+			CamNode* node = head;
+			while (node != NULL)
+			{
+				node->t->time_relative += -time_tick_relative;
+				node = node->next;
+			}
+			_new_node_->next = head;
+			head = _new_node_;
+			return;
+		}
+
+		//Insert Node Into Chain
+		CamNode* node = head;
+		while (node->next != NULL && node->next->t->time_relative > time_tick_relative)
+		{
+			node = node->next;
+		}
+		_new_node_->next = node->next;
+		node->next = _new_node_;
+		_new_node_->prev = node;
+		SetMarker(_new_marker_, current_tick);
+	}
+
+	bool RemoveNode(CamNode* node)
+	{
+		if (node == NULL) return false;
+
+		if (head == node) head = head->next;
+		if (node->prev != NULL) node->prev->next = node->next;
+		if (node->next != NULL) node->next->prev = node->prev;
+		delete node->t;
+		delete node;
+
+		return true;
+	}
+
+	bool RemoveClosestNode()
+	{
+		CamNode* node = GetClosestNode();
+		if (node == NULL)
+		{
+			Log::Info("Failed To Find Closest Node");
+		}
+		return RemoveNode(node);
+	}
+
+	bool BetweenMarkers()
+	{
+		CamNode* node = head;
+		while (node != NULL)
+		{
+			if (node->next != NULL)
+				if (node->t->time_relative < current_tick_dolly && node->next->t->time_relative > current_tick_dolly)
+					return true;
+			node = node->next;
+		}
+		return false;
+	}
+
+	Vector3 GetPositionForCurrentTime()
+	{
+		CamNode* m0, * m1, * m2, * m3;
+		CamNode* node = NULL;
+		int i = 0;
+
+		if (current_node == NULL || current_node->next == NULL) return Vector3();
+
+		node = m0 = m1 = m2 = m3 = current_node;
+		if (current_node->prev != NULL) m0 = current_node->prev;
+		while (i < 3)
+		{
+			if (i == 1) m2 = node;
+			if (i == 2) m3 = node;
+			if (node->next != NULL) node = node->next;
+			i++;
+		}
+
+		//We gotta do it like this to break free from the game's horrible tick rate
+		float current_time_relative = current_tick_dolly - current_node->t->time_relative;
+		//float alpha = current_time_relative / (Dolly::markers[i + 1].time_relative - Dolly::markers[i].time_relative);
+
+		float alpha = current_time_relative / (current_node->next->t->time_relative - current_node->t->time_relative);
+
+		//lerp position
+		return Math::CatmullRomInterpolate(
+			m0->t->position,
+			m1->t->position,
+			m2->t->position,
+			m3->t->position,
+			alpha,
+			0.0f);
+	}
+
+	CamNode* GetClosestNode()
+	{
+		float dist = 1e27f;
+		CamNode *node, *result;
+
+		node = head;
+		while (node != NULL)
+		{
+			float distance = Math::WorldToScreen(node->t->position, 1920, 1080).z;
+			if (distance < dist)
+			{
+				dist = distance;
+				result = node;
+			}
+			node = node->next;
+		}
+
+		Log::Info("Closest Distance: %f", dist);
+
+		//only return an index if closer than 0.5
+		if (dist < 0.5)
+			return node;
+		return NULL;
+	}
+
+	CamNode* GetHeaderNode()
+	{
+		return head;
+	}
+
+	CamNode* GetNodeByIndex(size_t index)
+	{
+		size_t i = 0;
+		CamNode* node = head;
+
+		while (node != NULL)
+		{
+			if (i == index) return node;
+			node = node->next;
+			i++;
+		}
+		// Fail to find node(index)
+		return NULL;
+	}
+
+	void SetMarker(CameraMarker* cameraMarker, long long time_tick)
+	{
+		if (Cam == NULL) return;
+		Camera c = *Cam;
+
+		cameraMarker->time_tick = time_tick;// unsafe
+		cameraMarker->time_relative = time_tick - begin_tick;
+		cameraMarker->position = c.position;
+		cameraMarker->forward = Math::GetForwardPosition(0.5f, c.position, c.rotation);
+		cameraMarker->fov = *fov;
+		cameraMarker->roll = c.rotation.z;
+	}
+	bool Playing()
+	{
+		return bplay;
+	}
+	void Play()
+	{
+		bplay = true;
+	}
+	void Pause()
+	{
+		bplay = false;
+	}
+	void Restart()
+	{
+		current_node = head;
+		bplay = false;
+		current_tick_dolly = 0;
+		Update();
+	}
 }

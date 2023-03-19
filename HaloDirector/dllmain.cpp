@@ -23,7 +23,7 @@ DWORD WINAPI Initialise(LPVOID Param) {
 
     ConsoleCommands::Initialise();
     Halo::Initialise();
-    Dolly::Initialise();
+    //Dolly::Initialise();
     UI::Init();
     Hooks::Initialise();
     Drawing::Init();

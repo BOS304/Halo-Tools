@@ -131,6 +131,7 @@ struct CameraMarker {
 	Vector3 position;
 	Vector3 forward;
 	float roll;
+    size_t time_tick;
 };
 
 struct Player {

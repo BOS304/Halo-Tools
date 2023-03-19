@@ -116,63 +116,49 @@ void DrawCameraMarkers() {
 	float width = windowHeight / 10.0f;
 	float hWidth = width / 2.0f;
 
-	for (int i = 0; i < Dolly::count; i++)
+	DollyCam::CamNode* current_node = DollyCam::GetHeaderNode();
+
+	while (current_node != NULL)
 	{
-		CameraMarker* m0;
-		CameraMarker* m1;
-		CameraMarker* m2;
-		CameraMarker* m3;
+		DollyCam::CamNode* m0, * m1, * m2, * m3;
+		DollyCam::CamNode* node = NULL;
+		int i = 0;
 
-
-		if (i < MAX_DOLLY_MARKERS - 1)
+		node = m0 = m1 = m2 = m3 = current_node;
+		if (current_node->prev != NULL) m0 = current_node->prev;
+		while (i < 3)
 		{
-			if (i > 0)
-			{
-				m0 = &Dolly::markers[i - 1];
-				m1 = &Dolly::markers[i];
-			}
-			else {
-				m0 = &Dolly::markers[i];
-				m1 = &Dolly::markers[i];
-			}
-
-			if ((Dolly::count - i) > 2)
-			{
-				m2 = &Dolly::markers[i + 1];
-				m3 = &Dolly::markers[i + 2];
-			}
-			else {
-				m2 = &Dolly::markers[i + 1];
-				m3 = &Dolly::markers[i + 1];
-			}
-
-			//Calculate inbetween points and draw lines
-
-			Vector3 last_pos;
-			for (float alpha = 0; alpha < 1.01; alpha += 0.05) {
-
-				Vector3 pos = Math::CatmullRomInterpolate(
-					m0->position,
-					m1->position,
-					m2->position,
-					m3->position,
-					alpha,
-					0.0f);
-
-				Vector3 screenpos = Math::WorldToScreen(pos, windowWidth, windowHeight);
-				//screenpos = Math::FixAspectRatio(screenpos, windowWidth, windowHeight);
-
-				//if (screenpos.x != 0 && screenpos.y != 0 && last_pos.x != 0 && last_pos.y != 0)
-				//{
-				//	DrawLine(screenpos.x * (float)windowWidth, screenpos.y * (float)windowHeight, last_pos.x * (float)windowWidth, last_pos.y * (float)windowHeight, 0xFF, 0xFf, 0xFF, 100, 5.0f);
-				//}
-				DrawFilled(screenpos.x, screenpos.y, 10, 10, 255, 255, 255, 255/2);
-
-				//last_pos = screenpos;
-			}
+			if (i == 1) m2 = node;
+			if (i == 2) m3 = node;
+			if (node->next != NULL) node = node->next;
+			i++;
 		}
 
-		CameraMarker* marker = &Dolly::markers[i];
+		//Log::Debug("%llX %llX\n%llX %llX", m0, m1, m2, m3);
+		//Calculate inbetween points and draw lines
+		Vector3 last_pos;
+		for (float alpha = 0; alpha < 1.01; alpha += 0.05) {
+
+			Vector3 pos = Math::CatmullRomInterpolate(
+				m0->t->position,
+				m1->t->position,
+				m2->t->position,
+				m3->t->position,
+				alpha,
+				0.0f);
+
+			Vector3 screenpos = Math::WorldToScreen(pos, windowWidth, windowHeight);
+			//screenpos = Math::FixAspectRatio(screenpos, windowWidth, windowHeight);
+
+			//if (screenpos.x != 0 && screenpos.y != 0 && last_pos.x != 0 && last_pos.y != 0)
+			//{
+			//	DrawLine(screenpos.x * (float)windowWidth, screenpos.y * (float)windowHeight, last_pos.x * (float)windowWidth, last_pos.y * (float)windowHeight, 0xFF, 0xFf, 0xFF, 100, 5.0f);
+			//}
+			DrawFilled(screenpos.x, screenpos.y, 10, 10, 255, 255, 255, 255 / 2);
+		}
+
+
+		CameraMarker* marker = current_node->t;
 		Vector3 screenpos = Math::WorldToScreen(marker->position, windowWidth, windowHeight);
 		//screenpos = Math::FixAspectRatio(screenpos, windowWidth, windowHeight);
 
@@ -187,32 +173,32 @@ void DrawCameraMarkers() {
 
 		//Calculate Time:
 
-		int n = (int)round(marker->time);
+		//int n = (int)round(marker->time);
+		//
+		//int day = n / (24 * 3600);
+		//
+		//n = n % (24 * 3600);
+		//int hour = n / 3600;
+		//
+		//n %= 3600;
+		//int minutes = n / 60;
+		//
+		//n %= 60;
+		//int seconds = n;
+		//
+		////Draw Info
+		//std::string text = std::to_string(minutes) + ":" + std::to_string(seconds);
+		//
+		//
+		//int textW = GetTextWidth((char*)text.c_str(), dx_Font);
+		//DrawShadowString((char*)text.c_str(), screenpos.x - (((float)textW) / 2.0f), screenpos.y + (sh_width * 1.1), 0xFF, 0xFF, 0xFF, dx_Font);
 
-		int day = n / (24 * 3600);
-
-		n = n % (24 * 3600);
-		int hour = n / 3600;
-
-		n %= 3600;
-		int minutes = n / 60;
-
-		n %= 60;
-		int seconds = n;
-
-		//Draw Info
-		std::string text = std::to_string(minutes) + ":" + std::to_string(seconds);
-
-		
-		int textW = GetTextWidth((char*)text.c_str(), dx_Font);
-		DrawShadowString((char*)text.c_str(), screenpos.x - (((float)textW) / 2.0f), screenpos.y + (sh_width * 1.1), 0xFF, 0xFF, 0xFF, dx_Font);
-		
 		//Draw Camera Number
 		//DrawShadowString((char*)std::to_string(i + 1).c_str(), ((screenpos.x) * (float)windowWidth), (screenpos.y * (float)windowHeight) - (sh_width * 1.3), 0xFF, 0xFF, 0xFF, dx_Font);
 
 		//Draw Dolly Markers
 
-		DrawFilled(screenpos.x  - sh_width, screenpos.y - sh_width, s_width, s_width, 0, 255, 255, 255);
+		DrawFilled(screenpos.x - sh_width, screenpos.y - sh_width, s_width, s_width, 0, 255, 255, 255);
 
 		//Draw line to indicate directoin
 
@@ -221,9 +207,9 @@ void DrawCameraMarkers() {
 		DrawLine(screenpos.x, screenpos.y, forward_screen_pos.x, forward_screen_pos.y, 255, 255, 255, 255 / 2, 3);
 
 		//Draw current dolly position
-		if (Dolly::BetweenMarkers())
+		if (DollyCam::BetweenMarkers())
 		{
-			screenpos = Math::WorldToScreen(Dolly::GetPositionForCurrentTime(), windowWidth, windowHeight);
+			screenpos = Math::WorldToScreen(DollyCam::GetPositionForCurrentTime(), windowWidth, windowHeight);
 			//screenpos = Math::FixAspectRatio(screenpos, windowWidth, windowHeight);
 
 			s_width = (width / (screenpos.z * 0.5));
@@ -233,8 +219,9 @@ void DrawCameraMarkers() {
 
 			DrawFilled(screenpos.x - sh_width, screenpos.y - sh_width, s_width, s_width, 255, 0, 255, 255);
 		}
-
+		current_node = current_node->next;
 	}
+
 }
 
 float centerW;
@@ -381,7 +368,7 @@ int Render()
 	{
 		if (Settings::draw_camera_path)
 		{
-			if(!Dolly::IsDollying())
+			if(!DollyCam::Playing())
 				DrawCameraMarkers();
 
 			DrawControls();

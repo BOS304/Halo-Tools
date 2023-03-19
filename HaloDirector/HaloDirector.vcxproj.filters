@@ -86,9 +86,6 @@
     <ClInclude Include="ConsoleCommands.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MinHook.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Drawing.h">
       <Filter>Header Files</Filter>
     </ClInclude>

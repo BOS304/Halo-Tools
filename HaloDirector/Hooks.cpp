@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "StdInc.h"
 #include "UI.h"
+#include "MinHook.h"
 
 
 using namespace Halo;
@@ -182,7 +183,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 					Log::Info("Index: %d  ->  %s", UI::GetIndex(), UI::GetCurrentName());
 					break;
 				case VK_INSERT:
-					Dolly::addMarker();
+					DollyCam::AddMarker();
 					Log::Info("Inserting Camera Marker");
 					break;
 				case VK_NEXT:
@@ -238,25 +239,74 @@ DWORD64 CameraHook_Return;
 void __declspec(naked) Camera_Hook() {
 
 	__asm {
-		movss [rsi+0x24],xmm1
-		mulss xmm0,xmm5 //added by v2845
-		mulss xmm0,xmm2
-		addss xmm0,[rsi+0x28]
-		mov Cam,rsi
+		//movss [rsi+0x24],xmm1
+		//mulss xmm0,xmm5 //added by v2845
+		//mulss xmm0,xmm2
+		//addss xmm0,[rsi+0x28]
+		mov [Cam],rsi
 		jmp[CameraHook_Return]
 	}
 
 }
 
 #pragma endregion
+static uintptr_t hModule;
+static uintptr_t TEBAddress;
+
+static uintptr_t pTarget_0;
+static uintptr_t pTarget_1;
+uintptr_t ppOriginal_0;
+uintptr_t ppOriginal_1;
+bool bInit_0 = false;
+DWORD64 DollyHook_Return;
+
+void __declspec(naked) Dolly_Hook() {
+	if (!bInit_0)
+	{
+		__asm
+		{
+			mov rax, gs:58h
+			mov [TEBAddress], rax
+		}
+		DollyCam::Init(hModule, TEBAddress);
+		bInit_0 = true;
+	}
+	DollyCam::MainFunction();
+	__asm jmp [ppOriginal_0]
+}
+
+
+
+DWORD WINAPI HookThread(LPVOID lpReserved)
+{
+	MH_Initialize();
+	while (true)
+	{
+		hModule = (uintptr_t)GetModuleHandleW(L"halo3.dll");
+		if (!hModule) continue;
+		pTarget_0 = hModule + 0xB1098;
+		pTarget_1 = hModule + 0x207C10;
+		if (*(BYTE*)pTarget_0 != 0xE9)
+		{
+			MH_DisableHook((LPVOID)pTarget_0);
+			MH_CreateHook((LPVOID)pTarget_0, Dolly_Hook, (LPVOID*)&ppOriginal_0);
+			MH_EnableHook((LPVOID)pTarget_0);
+			bInit_0 = false;
+			Halo::Initialise();
+			MH_DisableHook((LPVOID)pTarget_1);
+			MH_CreateHook((LPVOID)pTarget_1, Camera_Hook, (LPVOID*)&CameraHook_Return);
+			MH_EnableHook((LPVOID)pTarget_1);
+		}
+	}
+	MH_Uninitialize();
+}
 
 void Hooks::Initialise()
 {
 	CreateThread(NULL, 0, &MouseHook, NULL, 0, NULL);
+	CreateThread(NULL, 0, &HookThread, NULL, 0, NULL);
 	//CreateThread(NULL, 0, &KeyboardHook, NULL, 0, NULL);
 	current_process = GetCurrentProcessId();
-
-	CameraHook_Return = CreateHook((void*)Halo::CameraHookAddress, &Camera_Hook, 18);
 
     Log::Info("Hooks Initialised");
 } 
