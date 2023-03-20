@@ -887,11 +887,12 @@ namespace Airyz
                 const int PROCESS_VM_OPERATION = 0x0008;
                 const int PROCESS_VM_WRITE = 0x0020;
                 const int PROCESS_VM_READ = 0x0010;
-
-                Process targetProcess = Process.GetProcessesByName(processName)[0];
-
-                // geting the handle of the process - with required privileges
-                IntPtr procHandle = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, false, targetProcess.Id);
+                IntPtr procHandle = IntPtr.Zero;
+                foreach (Process process in Process.GetProcessesByName(processName))
+                {
+                    procHandle = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, false, process.Id);
+                    if (procHandle != IntPtr.Zero)   break;
+                }
 
                 // searching for the address of LoadLibraryA and storing it in a pointer
                 IntPtr loadLibraryAddr = GetProcAddress(GetModuleHandle("kernel32.dll"), "LoadLibraryA");

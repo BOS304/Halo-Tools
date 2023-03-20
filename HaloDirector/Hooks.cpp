@@ -233,23 +233,6 @@ DWORD WINAPI KeyboardHook(LPVOID param) {
 
 #pragma endregion
 
-#pragma region CameraHook
-
-DWORD64 CameraHook_Return;
-void __declspec(naked) Camera_Hook() {
-
-	__asm {
-		//movss [rsi+0x24],xmm1
-		//mulss xmm0,xmm5 //added by v2845
-		//mulss xmm0,xmm2
-		//addss xmm0,[rsi+0x28]
-		mov [Cam],rsi
-		jmp[CameraHook_Return]
-	}
-
-}
-
-#pragma endregion
 static uintptr_t hModule;
 static uintptr_t TEBAddress;
 
@@ -260,25 +243,28 @@ uintptr_t ppOriginal_1;
 bool bInit_0 = false;
 DWORD64 DollyHook_Return;
 
-void __declspec(naked) Dolly_Hook() {
+extern "C" __int64 GetTeb(void);
+
+void Dolly_Hook() {
 	if (!bInit_0)
 	{
-		__asm
-		{
-			mov rax, gs:58h
-			mov [TEBAddress], rax
-		}
+		TEBAddress = GetTeb();
 		DollyCam::Init(hModule, TEBAddress);
 		bInit_0 = true;
 	}
 	DollyCam::MainFunction();
-	__asm jmp [ppOriginal_0]
 }
 
-
+extern "C" void SetDolly(void* f, void* ori);
+extern "C" void SetCam(void* cam, void* ori);
+extern "C" void HookDolly(void);
+extern "C" void HookCamera(void);
 
 DWORD WINAPI HookThread(LPVOID lpReserved)
 {
+	SetDolly(Dolly_Hook, &ppOriginal_0);
+	SetCam(&Cam, &ppOriginal_1);
+
 	MH_Initialize();
 	while (true)
 	{
@@ -289,12 +275,12 @@ DWORD WINAPI HookThread(LPVOID lpReserved)
 		if (*(BYTE*)pTarget_0 != 0xE9)
 		{
 			MH_DisableHook((LPVOID)pTarget_0);
-			MH_CreateHook((LPVOID)pTarget_0, Dolly_Hook, (LPVOID*)&ppOriginal_0);
+			MH_CreateHook((LPVOID)pTarget_0, HookDolly, (LPVOID*)&ppOriginal_0);
 			MH_EnableHook((LPVOID)pTarget_0);
 			bInit_0 = false;
 			Halo::Initialise();
 			MH_DisableHook((LPVOID)pTarget_1);
-			MH_CreateHook((LPVOID)pTarget_1, Camera_Hook, (LPVOID*)&CameraHook_Return);
+			MH_CreateHook((LPVOID)pTarget_1, HookCamera, (LPVOID*)&ppOriginal_1);
 			MH_EnableHook((LPVOID)pTarget_1);
 		}
 	}

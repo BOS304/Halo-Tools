@@ -34,13 +34,13 @@ const char* UI::GetName(int type)
 	return UI::GetName((UI_CONTROLS)type);
 }
 
-const char* UI::SetText(int type, const char* text)
+void UI::SetText(int type, const char* text)
 {
 	ui_items[type].last_error_time = 0;
 	ui_items[type].name = text;
 }
 
-const char* UI::SetTextBackground(int type, const char* text)
+void UI::SetTextBackground(int type, const char* text)
 {
 	ui_items[type].name = text;
 }

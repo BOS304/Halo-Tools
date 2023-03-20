@@ -35,9 +35,9 @@ public:
 
 	static const char* GetName(int type);
 
-	static const char* SetText(int type, const char* text);
+	static void SetText(int type, const char* text);
 
-	static const char* SetTextBackground(int type, const char* text);
+	static void SetTextBackground(int type, const char* text);
 
 	static const char* GetCurrentName();
 
