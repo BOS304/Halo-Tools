@@ -8,6 +8,7 @@ CameraPointer qword 0
 p_CameraOri qword 0
 CameraOri qword 0
 
+p_draw qword 0
 
 .code
 
@@ -28,6 +29,11 @@ SetCam proc
 	ret
 SetCam endp
 
+SetDraw proc
+	mov [p_draw], rcx
+	ret
+SetDraw endp
+
 HookDolly proc
 	call [p_DollyFunc]
 	mov rax, [p_DollyOri]
@@ -37,6 +43,8 @@ HookDolly endp
 HookCamera proc
 	mov rax, [p_CameraPointer]
 	mov [rax], rsi
+	mov rax, [p_draw]
+	mov byte ptr [rax], 1
 	mov rax, [p_CameraOri]
 	jmp qword ptr [rax]
 HookCamera endp

@@ -366,30 +366,11 @@ int Render()
 
 	if (TargetWnd == GetForegroundWindow())
 	{
-		if (Settings::draw_camera_path)
+		if (!DollyCam::Playing() && Hooks::Draw() && Hooks::Initialised())
 		{
-			if(!DollyCam::Playing())
-				DrawCameraMarkers();
-
 			DrawControls();
-			//Test shit
-
-
-		//	float ratio = (float)windowHeight / (float)windowWidth;
-		//
-		//	for (float angle = 0; angle < Math::radians(360); angle += 0.1) {
-		//		Vector3 pos;
-		//		pos.x = 0.2;
-		//		pos.y = 0.5;
-		//
-		//		pos = Math::RotatePointAroundCenter(pos, angle);
-		//		pos = Math::FixAspectRatio(pos, windowWidth, windowHeight);
-		//
-		//		DrawFilled(pos.x * windowWidth, pos.y * windowHeight, 10, 10, 255, 255, 255, 255);
-		//	}
-
-
-
+			DrawCameraMarkers();
+			Hooks::SetDraw(false);
 		}
 	}
 

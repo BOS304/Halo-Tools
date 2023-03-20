@@ -26,7 +26,9 @@ class Hooks
 {
 public:
 	static DWORD64 CreateHook(void* toHook, void* hk_func, int len);
-
+	static bool Initialised();
+	static bool Draw();
+	static void SetDraw(bool b);
 	static void Initialise();
 };
 

@@ -255,13 +255,17 @@ void Dolly_Hook() {
 	DollyCam::MainFunction();
 }
 
+extern "C" void SetDraw(void* bdraw);
 extern "C" void SetDolly(void* f, void* ori);
 extern "C" void SetCam(void* cam, void* ori);
 extern "C" void HookDolly(void);
 extern "C" void HookCamera(void);
 
+bool bdraw = false;
+
 DWORD WINAPI HookThread(LPVOID lpReserved)
 {
+	SetDraw(&bdraw);
 	SetDolly(Dolly_Hook, &ppOriginal_0);
 	SetCam(&Cam, &ppOriginal_1);
 
@@ -296,3 +300,21 @@ void Hooks::Initialise()
 
     Log::Info("Hooks Initialised");
 } 
+
+bool Hooks::Initialised()
+{
+	hModule = (uintptr_t)GetModuleHandleW(L"halo3.dll");
+	if (!hModule) return false;
+	pTarget_0 = hModule + 0xB1098;
+	return *(BYTE*)pTarget_0 == 0xE9;
+}
+
+bool Hooks::Draw()
+{
+	return bdraw;
+}
+
+void Hooks::SetDraw(bool b)
+{
+	bdraw = b;
+}

@@ -73,7 +73,7 @@ void UI::Init()
 
 	ui_items[UI_TIMESCALE] = UI_Item{"Timescale", &timescale_func};
 	ui_items[UI_SKIP_NEXT_MARKER] = UI_Item{"Skip To Next Marker", &Dolly::SkipToNextMarker};
-	ui_items[UI_PLAY_DOLLY] = UI_Item{"Play Dolly", &Dolly::ToggleDolly};
+	ui_items[UI_PLAY_DOLLY] = UI_Item{"Play Dolly", &DollyCam::Play};
 	ui_items[UI_EDIT_MARKER] = UI_Item{"Edit Marker", &Dolly::EditMarker};
 	ui_items[UI_CREATE_MARKER] = UI_Item{"Create Marker", &DollyCam::AddMarker};
 	ui_items[UI_DELETE_MARKER] = UI_Item{"Delete Marker", &Dolly::removeSelected};

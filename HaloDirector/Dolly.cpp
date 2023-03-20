@@ -608,6 +608,10 @@ namespace DollyCam
 			{
 				current_tick_dolly++;
 			}
+			else
+			{
+				bplay = false;
+			}
 		}
 	}
 
@@ -616,6 +620,14 @@ namespace DollyCam
 		CamNode *m0, *m1, *m2, *m3;
 		CamNode *node = NULL;
 		int i = 0;
+
+		node = head;
+		while (node != NULL)
+		{
+			if (node->t->time_relative <= current_tick_dolly)
+				current_node = node;
+			node = node->next;
+		}
 
 		if (current_node == NULL || current_node->next == NULL) return false;
 
@@ -699,7 +711,7 @@ namespace DollyCam
 
 		//Insert Node Into Chain
 		CamNode* node = head;
-		while (node->next != NULL && node->next->t->time_relative > time_tick_relative)
+		while (node->next != NULL && node->next->t->time_relative <= time_tick_relative)
 		{
 			node = node->next;
 		}
