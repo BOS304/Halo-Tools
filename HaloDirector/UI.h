@@ -3,22 +3,24 @@
 #include <Windows.h>
 enum UI_CONTROLS {
 	UI_TIMESCALE = 0x0,
-	UI_SKIP_NEXT_MARKER = 0x1,
-	UI_PLAY_DOLLY = 0x2,
-	UI_EDIT_MARKER = 0x3,
-	UI_CREATE_MARKER = 0x4,
-	UI_DELETE_MARKER = 0x5,
-	UI_DELETE_ALL = 0x6,
+	UI_SKIP_NEXT_MARKER,
+	UI_PLAY_DOLLY,
+	UI_PAUSE,
+	UI_RESTART,
+	UI_EDIT_MARKER,
+	UI_CREATE_MARKER,
+	UI_DELETE_MARKER,
+	UI_DELETE_ALL,
 	UI_COUNT
 };
 
 typedef void(UI_Function)();
 
 struct UI_Item {
-	const char* name;
+	const char* name = "";
 	UI_Function* action;
 
-	const char* error_text;
+	const char* error_text = "";
 	ULONGLONG last_error_time;
 };
 

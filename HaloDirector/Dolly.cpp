@@ -602,9 +602,10 @@ namespace DollyCam
 
 	void MainFunction()
 	{
+
 		if (bplay)
 		{
-			if (Update())
+			if (Update(Halo::Cam,Halo::fov))
 			{
 				current_tick_dolly++;
 			}
@@ -615,7 +616,7 @@ namespace DollyCam
 		}
 	}
 
-	bool Update()
+	bool Update(Camera* Cam, float* fov)
 	{
 		CamNode *m0, *m1, *m2, *m3;
 		CamNode *node = NULL;
@@ -629,7 +630,7 @@ namespace DollyCam
 			node = node->next;
 		}
 
-		if (current_node == NULL || current_node->next == NULL) return false;
+		if (current_node == NULL || current_node->next == NULL || Cam == nullptr || fov == nullptr) return false;
 
 		node = m0 = m1 = m2 = m3 = current_node;
 		if (current_node->prev != NULL) m0 = current_node->prev;
@@ -642,8 +643,17 @@ namespace DollyCam
 		}
 
 		//We gotta do it like this to break free from the game's horrible tick rate
-		float current_time_relative = current_tick_dolly - node->t->time_relative;
-		float alpha = current_time_relative / (node->next->t->time_relative - node->t->time_relative);
+		float current_time_relative = current_tick_dolly - current_node->t->time_relative;
+		float alpha;
+		if ((current_node->next->t->time_relative - current_node->t->time_relative) == 0)
+		{
+			alpha = current_time_relative / 1.0;
+		}
+		else
+		{
+			alpha = current_time_relative / (float)(current_node->next->t->time_relative - current_node->t->time_relative);
+		}
+		 
 
 		//lerp position
 		Cam->position = Math::CatmullRomInterpolate(
@@ -680,6 +690,7 @@ namespace DollyCam
 		long long time_tick_relative = current_tick - begin_tick;
 
 		Log::Debug("_new_node_:%llX\n", _new_node_);
+		Log::Debug("Camera Address:%llX FOV Address:%llX\n", Cam, fov);
 
 		memset(_new_marker_, 0, sizeof(CameraMarker));
 		memset(_new_node_, 0, sizeof(CamNode));
@@ -855,6 +866,7 @@ namespace DollyCam
 	void Play()
 	{
 		bplay = true;
+		Log::Debug("Camera Address:%llX FOV Address:%llX Function Address:%llX\n", Cam, fov, Math::CatmullRomInterpolate);
 	}
 	void Pause()
 	{
@@ -865,6 +877,6 @@ namespace DollyCam
 		current_node = head;
 		bplay = false;
 		current_tick_dolly = 0;
-		Update();
+		Update(Halo::Cam, Halo::fov);
 	}
 }

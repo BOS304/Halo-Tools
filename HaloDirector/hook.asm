@@ -35,9 +35,10 @@ SetDraw proc
 SetDraw endp
 
 HookDolly proc
-	call [p_DollyFunc]
 	mov rax, [p_DollyOri]
-	jmp qword ptr [rax]
+	mov rax, [rax]
+	push rax
+	jmp [p_DollyFunc]
 HookDolly endp
 
 HookCamera proc

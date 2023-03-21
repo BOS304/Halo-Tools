@@ -41,7 +41,7 @@ namespace DollyCam
 		CamNode* prev;
 	};
 	void MainFunction();
-	bool Update();
+	bool Update(Camera* Cam, float* fov);
 	void AddMarker();
 	void SetMarker(CameraMarker* cameraMarker, long long time_tick);
 	bool RemoveNode(CamNode *node);
