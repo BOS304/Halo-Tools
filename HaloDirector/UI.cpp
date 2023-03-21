@@ -61,9 +61,9 @@ void command()
 }
 
 void timescale_func() {
-	*Halo::timescale += 0.1;
-	if (*Halo::timescale > 1.1)
-		*Halo::timescale = 0.1;
+	*Halo::p_timescale += 0.1;
+	if (*Halo::p_timescale > 1.1)
+		*Halo::p_timescale = 0.1;
 }
 
 void UI::Init()
@@ -72,14 +72,13 @@ void UI::Init()
 	Log::Info("Initialising UI");
 
 	ui_items[UI_TIMESCALE] = UI_Item{"Timescale", &timescale_func};
-	ui_items[UI_SKIP_NEXT_MARKER] = UI_Item{"Skip To Next Marker", &Dolly::SkipToNextMarker};
+	ui_items[UI_SKIP_NEXT_MARKER] = UI_Item{"Skip To Next Marker", &DollyCam::SkipToNextdMarker};
 	ui_items[UI_PLAY_DOLLY] = UI_Item{"Play Dolly", &DollyCam::Play};
-	ui_items[UI_PAUSE] = UI_Item{"Pause Dolly", &DollyCam::Pause};
 	ui_items[UI_RESTART] = UI_Item{"Restart Dolly", &DollyCam::Restart};
-	ui_items[UI_EDIT_MARKER] = UI_Item{"Edit Marker", &Dolly::EditMarker};
+	ui_items[UI_EDIT_MARKER] = UI_Item{"Edit Marker", &DollyCam::EditClosestMarker};
 	ui_items[UI_CREATE_MARKER] = UI_Item{"Create Marker", &DollyCam::AddMarker};
-	ui_items[UI_DELETE_MARKER] = UI_Item{"Delete Marker", &Dolly::removeSelected};
-	ui_items[UI_DELETE_ALL] = UI_Item{"Delete All Markers", &Dolly::removeAll};
+	ui_items[UI_DELETE_MARKER] = UI_Item{"Delete Marker", &DollyCam::RemoveClosestNode};
+	ui_items[UI_DELETE_ALL] = UI_Item{"Delete All Markers", &DollyCam::RemoveAllNode};
 }
 
 void UI::Left()

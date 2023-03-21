@@ -90,7 +90,7 @@ LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
 			if (foregroundID == current_process)
 			{
-				if (Cam)
+				if (p_Cam)
 				{
 					if (zDelta < 0)
 					{
@@ -98,16 +98,16 @@ LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
 						if (GetKeyState(VK_SHIFT) & 0x8000)
 						{
-							if (*fov + 5.0f < 150.0f)
+							if (*p_fov + 5.0f < 150.0f)
 							{
-								*fov += 5.0f;
+								*p_fov += 5.0f;
 							}
 							else {
-								*fov = 150.0f;
+								*p_fov = 150.0f;
 							}
 						}
 						else {
-							Cam->rotation.z += Math::radians(5);
+							p_Cam->rotation.z += Math::radians(5);
 						}
 
 					}
@@ -115,15 +115,15 @@ LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 						//Up
 						if (GetKeyState(VK_SHIFT) & 0x8000)
 						{
-							if (*fov - 5.0f > 1.0f) {
-								*fov -= 5.0f;
+							if (*p_fov - 5.0f > 1.0f) {
+								*p_fov -= 5.0f;
 							}
 							else {
-								*fov = 1.0f;
+								*p_fov = 1.0f;
 							}
 						}
 						else {
-							Cam->rotation.z -= Math::radians(5);
+							p_Cam->rotation.z -= Math::radians(5);
 						}
 					}
 				}
@@ -141,10 +141,10 @@ LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 			{
 				if (GetKeyState(VK_SHIFT) & 0x8000)
 				{
-					*fov = 80.0;
+					*p_fov = 80.0;
 				}
 				else {
-					Cam->rotation.z = 0;
+					p_Cam->rotation.z = 0;
 				}
 			}
 		}
@@ -187,15 +187,15 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 					Log::Info("Inserting Camera Marker");
 					break;
 				case VK_NEXT:
-					if (*Halo::timescale - 0.1 >= 0)
-						*Halo::timescale -= 0.1;
+					if (*Halo::p_timescale - 0.1 >= 0)
+						*Halo::p_timescale -= 0.1;
 					else 
-						*Halo::timescale = 0.0;
+						*Halo::p_timescale = 0.0;
 
 					break;
 				case VK_PRIOR:
-					if (*Halo::timescale < 10.0f)
-						*Halo::timescale += 0.1;
+					if (*Halo::p_timescale < 10.0f)
+						*Halo::p_timescale += 0.1;
 					break;
 			}
 			break;
@@ -267,7 +267,7 @@ DWORD WINAPI HookThread(LPVOID lpReserved)
 {
 	SetDraw(&bdraw);
 	SetDolly(Dolly_Hook, &ppOriginal_0);
-	SetCam(&Cam, &ppOriginal_1);
+	SetCam(&p_Cam, &ppOriginal_1);
 
 	MH_Initialize();
 	while (true)

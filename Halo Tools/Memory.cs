@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-using System.Linq.Expressions;
 
 namespace Airyz
 {
@@ -891,7 +889,7 @@ namespace Airyz
                 foreach (Process process in Process.GetProcessesByName(processName))
                 {
                     procHandle = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, false, process.Id);
-                    if (procHandle != IntPtr.Zero)   break;
+                    if (procHandle != IntPtr.Zero) break;
                 }
 
                 // searching for the address of LoadLibraryA and storing it in a pointer

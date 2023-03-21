@@ -3,23 +3,22 @@
 
 namespace Halo
 {
-	extern float *serverTime;
-
-	extern float* serverSeconds;
-
-	extern float* fov;
+	extern float* p_fov;
+	extern float fov;
 
 	extern DWORD64 CameraHookAddress;
 
-	extern Camera* Cam;
+	extern Camera* p_Cam;
+	extern Camera Cam;
 
 	extern HWND pHwnd;
 
-	extern float* viewMatrix;
+	extern float* p_viewMatrix;
 
 	extern HMODULE hMod;
 
-	extern float* timescale;
+	extern float* p_timescale;
+	extern float timescale;
 
 	DWORD64 Scan(LPCWSTR modName, const char* pattern, const char* mask);
 
@@ -28,3 +27,7 @@ namespace Halo
 	char* ScanIn(const char* pattern, const char* mask, char* begin, unsigned int size);
 };
 
+namespace mem
+{
+	bool PatchAOB(void* dst, void* src, unsigned int size);
+}

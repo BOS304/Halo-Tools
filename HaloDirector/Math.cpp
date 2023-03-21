@@ -18,20 +18,20 @@ float Math::degrees(float radians)
 
 Vector3 Math::WorldToScreen(Vector3 pos, int width, int height)
 {
-    float aspect_ratio = 1920.0f / 1080.0f;
+    float aspect_ratio = (float)width / (float)height;
     Vector3 cam_to_obj;
 
-    float y_fov = *fov / aspect_ratio;
+    float y_fov = *p_fov / aspect_ratio;
 
-    cam_to_obj.x = pos.x - Cam->position.x;
-    cam_to_obj.y = pos.y - Cam->position.y;
-    cam_to_obj.z = pos.z - Cam->position.z;
+    cam_to_obj.x = pos.x - p_Cam->position.x;
+    cam_to_obj.y = pos.y - p_Cam->position.y;
+    cam_to_obj.z = pos.z - p_Cam->position.z;
 
     float dist_to_obj = sqrt(cam_to_obj.x * cam_to_obj.x + cam_to_obj.y * cam_to_obj.y + cam_to_obj.z * cam_to_obj.z);
     Normalize(&cam_to_obj);
 
     float obj_yaw = atan2f(cam_to_obj.y, cam_to_obj.x);
-    float camera_yaw = std::fmod(Cam->rotation.x, PI * 2.0);
+    float camera_yaw = std::fmod(p_Cam->rotation.x, PI * 2.0);
     float relative_yaw = obj_yaw - camera_yaw;
 
     if (relative_yaw > PI) // yaw>180 degrees. convert to negative, smaller.
@@ -40,10 +40,10 @@ Vector3 Math::WorldToScreen(Vector3 pos, int width, int height)
         relative_yaw += 2 * PI;
 
     float obj_pitch = asin(cam_to_obj.z);
-    float cam_pitch = Cam->rotation.y;
+    float cam_pitch = p_Cam->rotation.y;
 
     float relative_pitch = cam_pitch - obj_pitch;
-    float x_pos = -relative_yaw * 2 / radians(*fov); // radian angle measurement cancels here.
+    float x_pos = -relative_yaw * 2 / radians(*p_fov); // radian angle measurement cancels here.
     float y_pos = relative_pitch * 2 / radians(y_fov); // and that's the (relative pitch) / (fov / 2)
 
     // [/Difference]
@@ -58,7 +58,7 @@ Vector3 Math::WorldToScreen(Vector3 pos, int width, int height)
 
 
     //Rotate around the center of the screen
-    Vector3 rotation = RotatePointAroundCenter(onscreen, -Cam->rotation.z, width, height);
+    Vector3 rotation = RotatePointAroundCenter(onscreen, -p_Cam->rotation.z, width, height);
 
     return rotation;
 }

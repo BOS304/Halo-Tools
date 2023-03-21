@@ -1,18 +1,16 @@
 #include "Addresses.h"
 
-//Current Playback Position while playing a demo (Bad Tickrate)
-float* Halo::serverTime;
-
-//Total time in seconds demo has been playing. Does not decrease when skipping backwards. Is affected by timescale (Good Tickrate)
-float* Halo::serverSeconds;
-float* Halo::fov;
+float* Halo::p_fov;
+float Halo::fov;
 DWORD64 Halo::CameraHookAddress;
-Camera* Halo::Cam;
+Camera* Halo::p_Cam;
+Camera Halo::Cam;
 HWND Halo::pHwnd;
 HMODULE Halo::hMod;
 
-float* Halo::viewMatrix;
-float* Halo::timescale;
+float* Halo::p_viewMatrix;
+float* Halo::p_timescale;
+float Halo::timescale;
 
 struct handle_data {
     unsigned long process_id;
@@ -83,6 +81,19 @@ DWORD64 GetBaseAddress(LPCWSTR modName) {
     return (DWORD64)info.lpBaseOfDll;
 }
 
+bool mem::PatchAOB(void* dst, void* src, unsigned int size)
+{
+    bool _flag = false;
+    DWORD oldprotect;
+    
+    VirtualProtect(dst, size, PAGE_EXECUTE_READWRITE, &oldprotect);
+    _flag = !IsBadWritePtr(dst, size) && !IsBadReadPtr(src, size);
+    if (_flag)	memcpy(dst, src, size);
+    VirtualProtect(dst, size, oldprotect, &oldprotect);
+    
+    return _flag;
+}
+
 void Halo::Initialise() {
     //Find all addresses needed
 
@@ -90,37 +101,7 @@ void Halo::Initialise() {
     
     // This signature is located at: 18047418C in the old halo3_v100.ida64 file. Tested to be working in two different version of the game.
     // Hopefully the only thing that may change is the 0x1D Offset.
-    DWORD64 temp = Scan(L"halo3.dll", "\x0f\x8f\x00\x00\x00\x00\xe8\x00\x00\x00\x00\x0f\x28\xc8", "xx????x????xxx") + 0x1D;
-    
-    if (temp < 0x1000)
-    {
-        Log::Error("Unable to find address: serverTime");
-    }
-    else
-    {
-        Log::Info("Found: %llx", temp);
-
-        serverTime = (float*)(temp + 4 + *(int*)temp);
-
-        Log::Info("Current Server Time: [%llx] -> %f", serverTime, *serverTime);
-    }
-
-    //viewMatrix = (float*)(GetBaseAddress(L"halo3.dll") + 0x28B1538);
-    //Log::Info("View Matrix Address: %llx", viewMatrix);
-
-    Log::Info("---------- Scanning for Server Seconds ----------");
-
-    temp = Scan(L"halo3.dll", "\xf3\x0f\x11\x05\x00\x00\x00\x00\x48\x8b\x04\x10", "xxxx????xxxx") + 4;
-    
-    if (temp < 0x1000)
-    {
-        Log::Error("Unable to find address: serverSeconds");
-    }
-    else {
-        Log::Info("Found Address: %llx", temp);
-        serverSeconds = (float*)(temp + 4 + *(int*)temp);
-        Log::Info("Calculated Address: %llx", serverSeconds);
-    }
+    DWORD64 temp = 0;
 
     Log::Info("---------- Scanning for Timescale ----------");
 
@@ -128,15 +109,15 @@ void Halo::Initialise() {
     
     if (temp < 0x1000)
     {
-        Log::Error("Unable to find address: timescale");
+        Log::Error("Unable to find address: p_timescale");
     }
     else {
         Log::Info("Found Address: %llx", temp);
 
-        timescale = (float*)(temp + 4 + *(int*)temp);
+        p_timescale = (float*)(temp + 4 + *(int*)temp);
 
-        Log::Info("Calculated Address: %llx", timescale);
-        Log::Info("Current Timescale: %f", *timescale);
+        Log::Info("Calculated Address: %llx", p_timescale);
+        Log::Info("Current Timescale: %f", *p_timescale);
     }
 
     Log::Info("---------- Scanning for FOV: ----------");
@@ -159,11 +140,11 @@ void Halo::Initialise() {
 
         Log::Info("Found : %llx", temp);
 
-        fov = (float*)(temp + 0x78 + *(int*)temp);
+        p_fov = (float*)(temp + 0x78 + *(int*)temp);
 
         Log::Info("Offset: %llx", *(int*)temp);
-        Log::Info("Address calculated: %llx", fov);
-        Log::Info("Current FOV: %f", *fov);
+        Log::Info("Address calculated: %llx", p_fov);
+        Log::Info("Current FOV: %f", *p_fov);
     }
 
 

@@ -265,8 +265,8 @@ void DrawControls() {
 		float w = 0;
 		if (i == UI_TIMESCALE) {
 			char str[40];
-
-			sprintf(str, "%.2f", *Halo::timescale);
+			mem::PatchAOB(&Halo::timescale, Halo::p_timescale, sizeof(Halo::timescale));
+			sprintf(str, "%.2f", Halo::timescale);
 			std::string text = std::string(UI::GetName(i)) + ": " + std::string(str);
 			w = GetTextWidth((char*)text.c_str(), dx_Font);
 		}
@@ -310,8 +310,8 @@ void DrawControls() {
 			//Special Case for Timescale
 			if (i == UI_TIMESCALE) {
 				char str[40];
-
-				sprintf(str, "%.2f", *Halo::timescale);
+				mem::PatchAOB(&Halo::timescale, Halo::p_timescale, sizeof(Halo::timescale));
+				sprintf(str, "%.2f", Halo::timescale);
 				std::string text_s = std::string(UI::GetName(i)) + ": " + std::string(str);
 				DrawShadowString((char*)text_s.c_str(), borderW + textSpacing, Y, 255, 255, 255, dx_Font);
 			}
