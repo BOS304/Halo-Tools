@@ -90,7 +90,6 @@ bool mem::PatchAOB(void* dst, void* src, unsigned int size)
     _flag = !IsBadWritePtr(dst, size) && !IsBadReadPtr(src, size);
     if (_flag)	memcpy(dst, src, size);
     VirtualProtect(dst, size, oldprotect, &oldprotect);
-    
     return _flag;
 }
 

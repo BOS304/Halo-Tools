@@ -32,6 +32,22 @@ LRESULT CALLBACK Proc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		PostQuitMessage(0); // We need to use this to exit a message loop
 		break;
+	case WM_SIZE:
+		TargetWnd = FindWindowA(0, tWindowName);
+		if (TargetWnd == NULL) break;
+		GetWindowRect(TargetWnd, &WindowRect);
+		GetClientRect(TargetWnd, &ClientRect);
+		windowHeight = WindowRect.bottom - WindowRect.top;
+		windowWidth = WindowRect.right - WindowRect.left;
+		clientHeight = ClientRect.bottom - ClientRect.top;
+		clientWidth = ClientRect.right - ClientRect.left;
+		borderHeight = (windowHeight - ClientRect.bottom);
+		borderWidth = (windowWidth - ClientRect.right) / 2; //only want one side
+		borderHeight -= borderWidth; //remove bottom from width, bottom is the same size as either side so we subtract that
+
+		WindowRect.left += borderWidth;
+		WindowRect.top += borderHeight;
+		MoveWindow(hWnd, WindowRect.left, WindowRect.top, clientWidth, clientHeight, true);
 	default:
 		return DefWindowProc(hWnd, Message, wParam, lParam); // Making sure all messages are processed
 		break;
@@ -72,6 +88,7 @@ void Drawing::Init()
 	if (TargetWnd)
 	{
 		GetWindowRect(TargetWnd, &WindowRect);
+		GetClientRect(TargetWnd, &ClientRect);
 		windowWidth = WindowRect.right - WindowRect.left;
 		windowHeight = WindowRect.bottom - WindowRect.top;
 		hWnd = CreateWindowExA(WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_LAYERED, lWindowName, lWindowName, WS_POPUP, 1, 1, windowWidth, windowHeight, 0, 0, 0, 0);

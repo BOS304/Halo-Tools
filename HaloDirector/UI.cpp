@@ -61,6 +61,8 @@ void command()
 }
 
 void timescale_func() {
+	if (IsBadWritePtr(Halo::p_timescale, sizeof(float))) return;
+
 	*Halo::p_timescale += 0.1;
 	if (*Halo::p_timescale > 1.1)
 		*Halo::p_timescale = 0.1;
@@ -72,11 +74,16 @@ void UI::Init()
 	Log::Info("Initialising UI");
 
 	ui_items[UI_TIMESCALE] = UI_Item{"Timescale", &timescale_func};
+	ui_items[UI_GAMETICK] = UI_Item{"GameTick", &timescale_func};
+	ui_items[UI_DOLLYTICK] = UI_Item{"DollyTick", &timescale_func};
+	ui_items[UI_BEGIN_TIME] = UI_Item{"BeginTime", &timescale_func};
 	ui_items[UI_SKIP_NEXT_MARKER] = UI_Item{"Skip To Next Marker", &DollyCam::SkipToNextdMarker};
+	ui_items[UI_BACK_LAST_MARKER] = UI_Item{"Back To Last Marker", &DollyCam::BackToLastdMarker};
 	ui_items[UI_PLAY_DOLLY] = UI_Item{"Play Dolly", &DollyCam::Play};
 	ui_items[UI_RESTART] = UI_Item{"Restart Dolly", &DollyCam::Restart};
 	ui_items[UI_EDIT_MARKER] = UI_Item{"Edit Marker", &DollyCam::EditClosestMarker};
-	ui_items[UI_CREATE_MARKER] = UI_Item{"Create Marker", &DollyCam::AddMarker};
+	ui_items[UI_CREATE_MARKER_GAME] = UI_Item{"Create Marker(Game)", &DollyCam::AddMarkerGameTick};
+	ui_items[UI_CREATE_MARKER_DOLLY] = UI_Item{"Create Marker(Dolly)", &DollyCam::AddMarkerDollyTick};
 	ui_items[UI_DELETE_MARKER] = UI_Item{"Delete Marker", &DollyCam::RemoveClosestNode};
 	ui_items[UI_DELETE_ALL] = UI_Item{"Delete All Markers", &DollyCam::RemoveAllNode};
 }

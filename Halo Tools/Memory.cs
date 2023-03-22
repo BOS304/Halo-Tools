@@ -164,9 +164,16 @@ namespace Airyz
         {
             if ((Process.GetProcessesByName(processName).Length != 0))
             {
-                process = Process.GetProcessesByName(processName)[0];
-                winHandle = process.MainWindowHandle;
-                pHandle = OpenProcess((int)ProcessAccessFlags.PROCESS_ALL_ACCESS, false, process.Id);
+                foreach(Process process in Process.GetProcessesByName(processName))
+                {
+                    pHandle = OpenProcess((int)ProcessAccessFlags.PROCESS_ALL_ACCESS, false, process.Id);
+                    if (pHandle != IntPtr.Zero)
+                    {
+                        this.process = process;
+                        winHandle = process.MainWindowHandle;
+                        return;
+                    }
+                }
             }
         } //Check if process is running and update handles 
 
@@ -920,11 +927,13 @@ namespace Airyz
             // privileges
             try
             {
-                Process targetProcess = Process.GetProcessesByName(processName)[0];
-
-                // geting the handle of the process - with required privileges
-                IntPtr procHandle = OpenProcess(0x1FFFFFu, false, targetProcess.Id);
-
+                IntPtr procHandle = IntPtr.Zero;
+                foreach (Process process in Process.GetProcessesByName(processName))
+                {
+                    // geting the handle of the process - with required privileges
+                    procHandle = OpenProcess(0x1FFFFFu, false, process.Id);
+                    if (procHandle != IntPtr.Zero) break;
+                }
 
                 // searching for the address of LoadLibraryA and storing it in a pointer
                 IntPtr loadLibraryAddr = GetProcAddress(GetModuleHandle("kernel32.dll"), "LoadLibraryW");

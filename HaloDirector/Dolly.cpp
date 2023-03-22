@@ -14,7 +14,7 @@ using namespace Halo;
 
 namespace DollyCam
 {
-	CamNode* head = NULL;
+	CamNode* head = NULL, *tail = NULL;
 	CamNode* current_node = NULL;
 	bool bplay = false;
 	bool bEditReady = false;
@@ -22,19 +22,27 @@ namespace DollyCam
 	long long speed_tick = 60;
 	long long current_tick_dolly = 0;
 	long long begin_tick = 0;
-	unsigned long* tickTime;
+	unsigned long* p_gameTickTime;
+	unsigned long gameTickTime;
 
 	static __int64* TEBAddress;
 	static __int64 hModule;
 	__int32 TlsIndex;
+
+	long long GetBeginTime() { return begin_tick; }
+	long long GetDollyTick() { return current_tick_dolly; }
+	long long GetGameTick() { if (Hooks::Initialised() && mem::PatchAOB(&gameTickTime, p_gameTickTime, sizeof(unsigned long))) return gameTickTime; else return 0; }
+	CamNode* GetHeadNode() { return head; }
+	CamNode* GetTailNode() { return tail; }
+	bool Playing() { return bplay; }
 
 	void Init(uintptr_t module, uintptr_t teb)
 	{
 		hModule = module;
 		TEBAddress = (__int64*)teb;
 		TlsIndex = *(__int32*)(hModule + 0xA2A09C);
-		tickTime = (unsigned long*)(*(__int64*)(*(__int64*)(TEBAddress + TlsIndex) + 0xC8i64) + 0xC);
-		bEditReady = false;
+		p_gameTickTime = (unsigned long*)(*(__int64*)(*(__int64*)(TEBAddress + TlsIndex) + 0xC8i64) + 0xC);
+
 		RemoveAllNode();
 	}
 
@@ -53,23 +61,16 @@ namespace DollyCam
 			}
 		}
 	}
-
+	//todo
 	bool Update(Camera* p_Cam, float* fov)
 	{
-		CamNode *m0, *m1, *m2, *m3;
-		CamNode *node = NULL;
+		CamNode* m0, * m1, * m2, * m3;
+		CamNode* node = NULL;
 		int i = 0;
 
-		node = head;
-		current_node = NULL;
-		while (node != NULL)
-		{
-			if (node->t->time_relative <= current_tick_dolly)
-				current_node = node;
-			node = node->next;
-		}
+		current_node = GetCurrentNode();
 
-		if (current_node == NULL || p_Cam == nullptr || fov == nullptr) return false;
+		if (current_node == NULL || p_Cam == nullptr || fov == nullptr || !Hooks::Initialised()) return false;
 
 		node = m0 = m1 = m2 = m3 = current_node;
 		if (current_node->prev != NULL) m0 = current_node->prev;
@@ -110,46 +111,61 @@ namespace DollyCam
 		p_Cam->rotation.z = Math::CosineInterpolate(m1->t->roll, m2->t->roll, alpha);
 		*fov = Math::CosineInterpolate(m1->t->fov, m2->t->fov, alpha);
 
-		return true;
+		// reach end
+		if (current_node->next == NULL) return false;
+		else return true;
 	}
 
-	void AddMarker()
+	void UpdateDollyTime()
 	{
-		if (bplay) return;
+		if (head == NULL) return;
+		long long offset = head->t->time_relative;
+		if (offset == 0) return;
+		CamNode* node = head;
+
+		while (node != NULL)
+		{
+			node->t->time_relative -= offset;
+			node = node->next;
+		}
+		current_tick_dolly -= offset;
+		begin_tick += offset;
+	}
+
+	void AddDollyTick(long long tick)
+	{
+		current_tick_dolly += tick;
+		Update(Halo::p_Cam, Halo::p_fov);
+	}
+
+	void AddMarker(long long tick)
+	{
+		if (bplay || !Hooks::Initialised()|| tick < 0) return;
 
 		CameraMarker* _new_marker_ = new CameraMarker;
 		CamNode* _new_node_ = new CamNode;
-		long long current_tick = *tickTime;
-		long long time_tick_relative = current_tick - begin_tick;
-
-		Log::Debug("_new_node_:%llX\n", _new_node_);
-		Log::Debug("Camera Address:%llX FOV Address:%llX\n", p_Cam, p_fov);
+		long long time_tick_relative = tick - begin_tick;
 
 		memset(_new_marker_, 0, sizeof(CameraMarker));
 		memset(_new_node_, 0, sizeof(CamNode));
 		_new_node_->t = _new_marker_;
+
 		//New Chain
 		if (head == NULL)
 		{
-			begin_tick = current_tick;
-			SetMarker(_new_marker_, current_tick);
-			head = _new_node_;
+			begin_tick = tick;
+			SetMarker(_new_marker_, tick);
+			head = tail = _new_node_;
 			Log::Debug("Head:%llX\n", head);
 			return;
 		}
-		//
+
 		if (time_tick_relative < head->t->time_relative)
 		{
-			begin_tick = current_tick;
-			SetMarker(_new_marker_, current_tick);
-			CamNode* node = head;
-			while (node != NULL)
-			{
-				node->t->time_relative += -time_tick_relative;
-				node = node->next;
-			}
+			SetMarker(_new_marker_, tick);
 			_new_node_->next = head;
 			head = _new_node_;
+			UpdateDollyTime();
 			return;
 		}
 
@@ -162,19 +178,33 @@ namespace DollyCam
 		_new_node_->next = node->next;
 		node->next = _new_node_;
 		_new_node_->prev = node;
-		SetMarker(_new_marker_, current_tick);
+		if (_new_node_->next == NULL)	tail = _new_node_;
+		SetMarker(_new_marker_, tick);
+	}
+
+	void AddMarkerGameTick()
+	{
+		if (bplay || !Hooks::Initialised() || IsBadReadPtr(p_gameTickTime, sizeof(long))) return;
+		AddMarker(*p_gameTickTime);
+	}
+
+	void AddMarkerDollyTick()
+	{
+		if (bplay || !Hooks::Initialised() || IsBadReadPtr(p_gameTickTime, sizeof(long))) return;
+		AddMarker(begin_tick + current_tick_dolly);
 	}
 
 	bool RemoveNode(CamNode* node)
 	{
 		if (node == NULL) return false;
 
-		if (head == node) head = head->next;
 		if (node->prev != NULL) node->prev->next = node->next;
+		else head = head->next;
 		if (node->next != NULL) node->next->prev = node->prev;
+		else tail = tail->prev;
 		delete node->t;
 		delete node;
-
+		UpdateDollyTime();
 		return true;
 	}
 
@@ -191,15 +221,28 @@ namespace DollyCam
 		head = NULL;
 		bplay = false;
 		begin_tick = 0;
+		current_tick_dolly = 0;
+		bEditReady = false;
+		gameTickTime = 0;
 	}
 
 	void RemoveClosestNode()
 	{
+		bplay = false;
 		CamNode* node = GetClosestNode();
 		if (node == NULL)
 		{
 			Log::Info("Failed To Find Closest Node");
 			return;
+		}
+		if (node == GetCurrentNode())
+		{
+			SkipToNextdMarker();
+		}
+		if (node->next == NULL)
+		{
+			begin_tick = 0;
+			current_tick_dolly = 0;
 		}
 		RemoveNode(node);
 	}
@@ -276,9 +319,29 @@ namespace DollyCam
 		return result;
 	}
 
-	CamNode* GetHeaderNode()
+	CamNode* GetCurrentNode()
 	{
-		return head;
+		CamNode* node, *current_node = NULL;
+
+		if (current_tick_dolly == 0)// beginning
+		{
+			current_node = head;
+		}
+		else if ((tail != NULL && current_tick_dolly > tail->t->time_relative) || current_tick_dolly < 0)
+		{
+			current_node = NULL;
+		}
+		else
+		{
+			node = head;
+			while (node != NULL)
+			{
+				if (node->t->time_relative <= current_tick_dolly)
+					current_node = node;
+				node = node->next;
+			}
+		}
+		return current_node;
 	}
 
 	CamNode* GetNodeByIndex(size_t index)
@@ -309,32 +372,45 @@ namespace DollyCam
 		else
 		{
 			RemoveNode(EditNode);
-			AddMarker();
+			AddMarkerGameTick();
 			bEditReady = false;
 		}
 	}
 	void SetMarker(CameraMarker* cameraMarker, long long time_tick)
 	{
-		if (p_Cam == NULL) return;
-		Camera c = *p_Cam;
+		if (p_Cam == NULL || IsBadWritePtr(Halo::p_Cam,sizeof(Camera))) return;
+		Camera c = *Halo::p_Cam;
 
-		cameraMarker->time_tick = time_tick;// unsafe
 		cameraMarker->time_relative = time_tick - begin_tick;
 		cameraMarker->position = c.position;
 		cameraMarker->forward = Math::GetForwardPosition(0.5f, c.position, c.rotation);
 		cameraMarker->fov = *p_fov;
 		cameraMarker->roll = c.rotation.z;
 	}
-	bool Playing(){return bplay;}
+
 	void SkipToNextdMarker()
 	{
-		if (current_node == NULL || current_node->next == NULL) return;
-		current_tick_dolly = current_node->next->t->time_relative;
+		if (current_node == NULL) return;
+		if (current_node->next == NULL) // tail
+			current_tick_dolly = head->t->time_relative;
+		else
+			current_tick_dolly = current_node->next->t->time_relative;
 		Update(Halo::p_Cam, Halo::p_fov);
 	}
+
+	void BackToLastdMarker()
+	{
+		if (current_node == NULL) return;
+		if (current_node->prev == NULL) // head
+			current_tick_dolly = tail->t->time_relative;
+		else
+			current_tick_dolly = current_node->prev->t->time_relative;
+		Update(Halo::p_Cam, Halo::p_fov);
+	}
+
 	void Play()
 	{
-		if (current_node == NULL || current_node->next == NULL)
+		if (current_node == NULL || current_node == tail || current_tick_dolly < 0)
 		{
 			Restart();
 		}

@@ -126,12 +126,11 @@ struct Camera {
 
 struct CameraMarker {
 	float time;
-	float time_relative;
+	long long time_relative;
 	float fov;
 	Vector3 position;
 	Vector3 forward;
 	float roll;
-    size_t time_tick;
 };
 
 struct Player {

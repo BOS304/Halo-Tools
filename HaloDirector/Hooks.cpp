@@ -87,44 +87,42 @@ LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 			DWORD foregroundID = 0;
 			GetWindowThreadProcessId(foreground, &foregroundID);
 
+			if (!Halo::p_Cam || !Halo::p_fov || !Hooks::Initialised() || IsBadWritePtr(Halo::p_Cam, sizeof(Camera)) || IsBadWritePtr(Halo::p_fov, sizeof(float)))
+				return CallNextHookEx(0, nCode, wParam, lParam);
 
 			if (foregroundID == current_process)
 			{
-				if (p_Cam)
+				if (zDelta < 0)
 				{
-					if (zDelta < 0)
+					//Down
+					if (GetKeyState(VK_SHIFT) & 0x8000)
 					{
-						//Down
-
-						if (GetKeyState(VK_SHIFT) & 0x8000)
+						if (*Halo::p_fov + 5.0f < 150.0f)
 						{
-							if (*p_fov + 5.0f < 150.0f)
-							{
-								*p_fov += 5.0f;
-							}
-							else {
-								*p_fov = 150.0f;
-							}
+							*Halo::p_fov += 5.0f;
 						}
 						else {
-							p_Cam->rotation.z += Math::radians(5);
+							*Halo::p_fov = 150.0f;
 						}
-
 					}
 					else {
-						//Up
-						if (GetKeyState(VK_SHIFT) & 0x8000)
-						{
-							if (*p_fov - 5.0f > 1.0f) {
-								*p_fov -= 5.0f;
-							}
-							else {
-								*p_fov = 1.0f;
-							}
+						Halo::p_Cam->rotation.z += Math::radians(5);
+					}
+
+				}
+				else {
+					//Up
+					if (GetKeyState(VK_SHIFT) & 0x8000)
+					{
+						if (*Halo::p_fov - 5.0f > 1.0f) {
+							*Halo::p_fov -= 5.0f;
 						}
 						else {
-							p_Cam->rotation.z -= Math::radians(5);
+							*Halo::p_fov = 1.0f;
 						}
+					}
+					else {
+						Halo::p_Cam->rotation.z -= Math::radians(5);
 					}
 				}
 			}
@@ -171,7 +169,6 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 					break;
 				case 'Q':
 					Log::Info("Executing: %s", UI::GetCurrentName());
-					//Dolly::addMarker();
 					UI::Do();
 					break;
 				case '1':
@@ -183,19 +180,30 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 					Log::Info("Index: %d  ->  %s", UI::GetIndex(), UI::GetCurrentName());
 					break;
 				case VK_INSERT:
-					DollyCam::AddMarker();
-					Log::Info("Inserting Camera Marker");
+					DollyCam::AddMarkerDollyTick();
+					Log::Info("Inserting Camera Marker(Dolly)");
 					break;
 				case VK_NEXT:
 					if (*Halo::p_timescale - 0.1 >= 0)
 						*Halo::p_timescale -= 0.1;
 					else 
 						*Halo::p_timescale = 0.0;
-
 					break;
 				case VK_PRIOR:
 					if (*Halo::p_timescale < 10.0f)
 						*Halo::p_timescale += 0.1;
+					break;
+				case VK_ADD:
+					DollyCam::AddDollyTick(1);
+					Log::Info("Add 1 Tick(Dolly)");
+					break;
+				case VK_SUBTRACT:
+					DollyCam::AddDollyTick(-1);
+					Log::Info("Add -1 Tick(Dolly)");
+					break;
+				case VK_DELETE:
+					DollyCam::RemoveClosestNode();
+					Log::Info("RemoveClosestNode");
 					break;
 			}
 			break;
@@ -238,8 +246,10 @@ static uintptr_t TEBAddress;
 
 static uintptr_t pTarget_0;
 static uintptr_t pTarget_1;
+static uintptr_t pTarget_2;
 uintptr_t ppOriginal_0;
 uintptr_t ppOriginal_1;
+uintptr_t ppOriginal_2;
 bool bInit_0 = false;
 DWORD64 DollyHook_Return;
 
@@ -255,11 +265,19 @@ void Dolly_Hook() {
 	DollyCam::MainFunction();
 }
 
+void Uninit_Hook() {
+	bInit_0 = false;
+	DollyCam::RemoveAllNode();
+}
+
 extern "C" void SetDraw(void* bdraw);
 extern "C" void SetDolly(void* f, void* ori);
+extern "C" void SetUninit(void* f, void* ori);
 extern "C" void SetCam(void* cam, void* ori);
 extern "C" void HookDolly(void);
 extern "C" void HookCamera(void);
+extern "C" void HookUninit(void);
+
 
 bool bdraw = false;
 
@@ -268,7 +286,7 @@ DWORD WINAPI HookThread(LPVOID lpReserved)
 	SetDraw(&bdraw);
 	SetDolly(Dolly_Hook, &ppOriginal_0);
 	SetCam(&p_Cam, &ppOriginal_1);
-
+	SetUninit(Uninit_Hook, &ppOriginal_2);
 	MH_Initialize();
 	while (true)
 	{
@@ -276,16 +294,20 @@ DWORD WINAPI HookThread(LPVOID lpReserved)
 		if (!hModule) continue;
 		pTarget_0 = hModule + 0xB1098;
 		pTarget_1 = hModule + 0x207C10;
+		pTarget_2 = hModule + 0xB1764;
 		if (*(BYTE*)pTarget_0 != 0xE9)
 		{
+			bInit_0 = false;
+			Halo::Initialise();
 			MH_DisableHook((LPVOID)pTarget_0);
 			MH_CreateHook((LPVOID)pTarget_0, HookDolly, (LPVOID*)&ppOriginal_0);
 			MH_EnableHook((LPVOID)pTarget_0);
-			bInit_0 = false;
-			Halo::Initialise();
 			MH_DisableHook((LPVOID)pTarget_1);
 			MH_CreateHook((LPVOID)pTarget_1, HookCamera, (LPVOID*)&ppOriginal_1);
 			MH_EnableHook((LPVOID)pTarget_1);
+			MH_DisableHook((LPVOID)pTarget_2);
+			MH_CreateHook((LPVOID)pTarget_2, HookUninit, (LPVOID*)&ppOriginal_2);
+			MH_EnableHook((LPVOID)pTarget_2);
 		}
 	}
 	MH_Uninitialize();
@@ -306,7 +328,7 @@ bool Hooks::Initialised()
 	hModule = (uintptr_t)GetModuleHandleW(L"halo3.dll");
 	if (!hModule) return false;
 	pTarget_0 = hModule + 0xB1098;
-	return *(BYTE*)pTarget_0 == 0xE9;
+	return (*(BYTE*)pTarget_0 == 0xE9) && bInit_0;
 }
 
 bool Hooks::Draw()

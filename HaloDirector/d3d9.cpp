@@ -116,7 +116,7 @@ void DrawCameraMarkers() {
 	float width = windowHeight / 10.0f;
 	float hWidth = width / 2.0f;
 
-	DollyCam::CamNode* current_node = DollyCam::GetHeaderNode();
+	DollyCam::CamNode* current_node = DollyCam::GetHeadNode();
 
 	while (current_node != NULL)
 	{
@@ -171,30 +171,14 @@ void DrawCameraMarkers() {
 		if (screenpos.z < 0.5)
 			DrawFilled(screenpos.x - outline_width_h, screenpos.y - outline_width_h, outline_width, outline_width, 255, 255, 255, 255);
 
-		//Calculate Time:
-
-		//int n = (int)round(marker->time);
-		//
-		//int day = n / (24 * 3600);
-		//
-		//n = n % (24 * 3600);
-		//int hour = n / 3600;
-		//
-		//n %= 3600;
-		//int minutes = n / 60;
-		//
-		//n %= 60;
-		//int seconds = n;
-		//
 		////Draw Info
-		//std::string text = std::to_string(minutes) + ":" + std::to_string(seconds);
-		//
-		//
-		//int textW = GetTextWidth((char*)text.c_str(), dx_Font);
-		//DrawShadowString((char*)text.c_str(), screenpos.x - (((float)textW) / 2.0f), screenpos.y + (sh_width * 1.1), 0xFF, 0xFF, 0xFF, dx_Font);
+		std::string text = std::to_string(current_node->t->time_relative) + '\n' + std::to_string(current_node->t->time_relative + DollyCam::GetBeginTime());
+		
+		int textW = GetTextWidth((char*)text.c_str(), dx_Font);
+		DrawShadowString((char*)text.c_str(), screenpos.x - (((float)textW) / 2.0f), screenpos.y + (sh_width * 1.1), 0xFF, 0xFF, 0xFF, dx_Font);
 
 		//Draw Camera Number
-		//DrawShadowString((char*)std::to_string(i + 1).c_str(), ((screenpos.x) * (float)windowWidth), (screenpos.y * (float)windowHeight) - (sh_width * 1.3), 0xFF, 0xFF, 0xFF, dx_Font);
+		DrawShadowString((char*)std::to_string(i + 1).c_str(), ((screenpos.x) * (float)windowWidth), (screenpos.y * (float)windowHeight) - (sh_width * 1.3), 0xFF, 0xFF, 0xFF, dx_Font);
 
 		//Draw Dolly Markers
 
@@ -310,12 +294,38 @@ void DrawControls() {
 			//Special Case for Timescale
 			if (i == UI_TIMESCALE) {
 				char str[40];
-				mem::PatchAOB(&Halo::timescale, Halo::p_timescale, sizeof(Halo::timescale));
+				if (Hooks::Initialised())	mem::PatchAOB(&Halo::timescale, Halo::p_timescale, sizeof(Halo::timescale));
 				sprintf(str, "%.2f", Halo::timescale);
 				std::string text_s = std::string(UI::GetName(i)) + ": " + std::string(str);
 				DrawShadowString((char*)text_s.c_str(), borderW + textSpacing, Y, 255, 255, 255, dx_Font);
 			}
-			else {
+			else if (i == UI_GAMETICK)
+			{
+				char str[40];//add dolly begin time
+				
+				sprintf(str, "%lld", DollyCam::GetGameTick());
+				std::string text_s = std::string(UI::GetName(i)) + ": " + std::string(str);
+				DrawShadowString((char*)text_s.c_str(), borderW + textSpacing, Y, 255, 255, 255, dx_Font);
+			}
+			else if (i == UI_DOLLYTICK)
+			{
+				char str[40];
+
+				sprintf(str, "%lld", DollyCam::GetDollyTick());
+				std::string text_s = std::string(UI::GetName(i)) + ": " + std::string(str);
+				DrawShadowString((char*)text_s.c_str(), borderW + textSpacing, Y, 255, 255, 255, dx_Font);
+
+			}else if (i == UI_BEGIN_TIME)
+			{
+				char str[40];
+
+				sprintf(str, "%lld", DollyCam::GetBeginTime());
+				std::string text_s = std::string(UI::GetName(i)) + ": " + std::string(str);
+				DrawShadowString((char*)text_s.c_str(), borderW + textSpacing, Y, 255, 255, 255, dx_Font);
+
+			}
+			else
+			{
 				if (UI::DisplayError(i))
 				{
 					DrawShadowString((char*)UI::GetErrorText(i), borderW + textSpacing, Y, 255, 255, 255, dx_Font);
@@ -366,11 +376,10 @@ int Render()
 
 	if (TargetWnd == GetForegroundWindow())
 	{
-		if (!DollyCam::Playing() && Hooks::Draw() && Hooks::Initialised())
+		if (Settings::draw_camera_path && Hooks::Initialised())
 		{
 			DrawControls();
 			DrawCameraMarkers();
-			Hooks::SetDraw(false);
 		}
 	}
 

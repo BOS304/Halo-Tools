@@ -8,6 +8,9 @@ CameraPointer qword 0
 p_CameraOri qword 0
 CameraOri qword 0
 
+p_UninitFunc qword 0
+p_UninitOri qword 0
+
 p_draw qword 0
 
 .code
@@ -29,6 +32,12 @@ SetCam proc
 	ret
 SetCam endp
 
+SetUninit proc
+	mov [p_UninitFunc], rcx
+	mov [p_UninitOri], rdx
+	ret
+SetUninit endp
+
 SetDraw proc
 	mov [p_draw], rcx
 	ret
@@ -49,5 +58,12 @@ HookCamera proc
 	mov rax, [p_CameraOri]
 	jmp qword ptr [rax]
 HookCamera endp
+
+HookUninit proc
+	mov rax, [p_UninitOri]
+	mov rax, [rax]
+	push rax
+	jmp [p_UninitFunc]
+HookUninit endp
 
 end

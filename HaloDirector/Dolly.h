@@ -11,10 +11,18 @@ namespace DollyCam
 		CamNode* next;
 		CamNode* prev;
 	};
+
+	long long GetDollyTick();
+	long long GetGameTick();
+	long long GetBeginTime();
 	void MainFunction();
 	bool Update(Camera* p_Cam, float* fov);
-	void AddMarker();
+	void UpdateDollyTime();
+	void AddDollyTick(long long tick);
+	void AddMarkerGameTick();
+	void AddMarkerDollyTick();
 	void SkipToNextdMarker();
+	void BackToLastdMarker();
 	void EditClosestMarker();
 	void SetMarker(CameraMarker* cameraMarker, long long time_tick);
 	bool RemoveNode(CamNode *node);
@@ -23,7 +31,9 @@ namespace DollyCam
 	bool BetweenMarkers();
 	Vector3 GetPositionForCurrentTime();
 	CamNode* GetClosestNode();
-	CamNode* GetHeaderNode();
+	CamNode* GetCurrentNode();
+	CamNode* GetHeadNode();
+	CamNode* GetTailNode();
 	CamNode* GetNodeByIndex(size_t index);
 	bool Playing();
 	void Play();
