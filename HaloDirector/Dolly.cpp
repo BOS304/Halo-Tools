@@ -320,11 +320,13 @@ namespace DollyCam
 	{
 		CamNode* node, *current_node = NULL;
 
+		if (head == NULL) return NULL;
+
 		if (current_tick_dolly == 0)// beginning
 		{
 			current_node = head;
 		}
-		else if ((tail != NULL && current_tick_dolly > tail->t->time_relative) || current_tick_dolly < 0)
+		else if (current_tick_dolly > tail->t->time_relative || current_tick_dolly < 0)
 		{
 			current_node = NULL;
 		}
@@ -395,9 +397,9 @@ namespace DollyCam
 	void SkipToNextMarker()
 	{
 		if (!Hooks::Initialised()) return;
-		if (current_node == NULL) return;
-		if (current_node->next == NULL) // tail
-			current_tick_dolly = head->t->time_relative;
+		current_node = GetCurrentNode();
+		if (current_node == NULL || current_node->next == NULL) // tail
+			current_tick_dolly = 0;
 		else
 			current_tick_dolly = current_node->next->t->time_relative;
 		Update(Halo::p_Cam, Halo::p_fov);
@@ -406,8 +408,10 @@ namespace DollyCam
 	void BackToLastMarker()
 	{
 		if (!Hooks::Initialised()) return;
-		if (current_node == NULL) return;
-		if (current_node->prev == NULL) // head
+		current_node = GetCurrentNode();
+		if (current_node == NULL)
+			current_tick_dolly = 0;
+		else if (current_node->prev == NULL) // head
 			current_tick_dolly = tail->t->time_relative;
 		else
 			current_tick_dolly = current_node->prev->t->time_relative;
