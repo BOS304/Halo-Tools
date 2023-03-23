@@ -505,6 +505,7 @@ namespace DollyCam
 				_new_node_ = new CamNode;
 				_new_marker = new CameraMarker;
 
+				memset(_new_node_, 0, sizeof(CamNode));
 				_new_node_->t = _new_marker;
 
 				memcpy(_new_marker, &marker, sizeof(CameraMarker));
@@ -576,7 +577,7 @@ namespace DollyCam
 			ConsoleCommands::Add("dolly_save_path", &Save);
 			ConsoleCommands::Add("dolly_load_path", &Load);
 			ConsoleCommands::Add("dolly_set_begin", &SetBeginTime);
-			ConsoleCommands::Add("dolly_set_tick", &SetDollyTick)
+			ConsoleCommands::Add("dolly_set_tick", &SetDollyTick);
 		}
 	}
 }
