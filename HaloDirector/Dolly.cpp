@@ -18,6 +18,7 @@ namespace DollyCam
 	CamNode* current_node = NULL;
 	bool bplay = false;
 	bool bEditReady = false;
+	bool bSync = false;
 
 	long long speed_tick = 60;
 	long long current_tick_dolly = 0;
@@ -58,6 +59,7 @@ namespace DollyCam
 			else
 			{
 				bplay = false;
+				if (bSync && Halo::p_timescale) *Halo::p_timescale = 0.0f;
 			}
 		}
 	}
@@ -426,6 +428,7 @@ namespace DollyCam
 			Restart();
 		}
 		bplay = !bplay;
+		if (bSync && Halo::p_timescale) *Halo::p_timescale = bplay ? 1.0f : 0.0f;
 		Log::Debug("Camera Address:%llX FOV Address:%llX\n", p_Cam, p_fov);
 	}
 	void Restart()
@@ -433,6 +436,7 @@ namespace DollyCam
 		if (!Hooks::Initialised()) return;
 		current_node = head;
 		bplay = false;
+		if (bSync && Halo::p_timescale) *Halo::p_timescale = 0.0f;
 		current_tick_dolly = 0;
 		Update(Halo::p_Cam, Halo::p_fov);
 	}
@@ -576,12 +580,36 @@ namespace DollyCam
 			current_tick_dolly = num;
 		}
 
+		void SetDollySync(const char* arg)
+		{
+			if (arg == NULL)
+			{
+				Log::Info("Received 0 Argument. Expected 1 Argument.");
+				return;
+			}
+
+			long long num = 0;
+
+			try {
+				num = std::stoll(arg);
+			}
+			catch (std::invalid_argument const& e) {
+				Log::Error("Console Commands -> Invalid Argument");
+			}
+			catch (std::out_of_range const& e) {
+				Log::Error("Console Commands -> Out of Range");
+			}
+
+			bSync = num;
+		}
+
 		void Init()
 		{
 			ConsoleCommands::Add("dolly_save_path", &Save);
 			ConsoleCommands::Add("dolly_load_path", &Load);
 			ConsoleCommands::Add("dolly_set_begin", &SetBeginTime);
 			ConsoleCommands::Add("dolly_set_tick", &SetDollyTick);
+			ConsoleCommands::Add("dolly_set_sync", &SetDollySync);
 		}
 	}
 }
