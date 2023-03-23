@@ -152,16 +152,34 @@ LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
+	static bool bKeySubtractPressed = false;
+	static bool bKeyAddPressed = false;
 	BOOL fEatKeystroke = FALSE;
 
 	if (nCode == HC_ACTION && is_foreground())
 	{
-
+		PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT)lParam;
 		switch (wParam)
 		{
+		case WM_KEYDOWN:
+		case WM_SYSKEYDOWN:
+			
+			switch (p->vkCode)
+			{
+			case VK_ADD:
+				DollyCam::AddDollyTick(1);
+				Log::Info("Add 1 Tick(Dolly)");
+				bKeyAddPressed = true;
+				break;
+			case VK_SUBTRACT:
+				DollyCam::AddDollyTick(-1);
+				Log::Info("Add -1 Tick(Dolly)");
+				bKeySubtractPressed = true;
+				break;
+			}
+			break;
 		case WM_KEYUP:
 		case WM_SYSKEYUP:
-			PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT)lParam;
 			switch (p->vkCode)
 			{
 				case VK_F2:
@@ -194,12 +212,10 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 						*Halo::p_timescale += 0.1;
 					break;
 				case VK_ADD:
-					DollyCam::AddDollyTick(1);
-					Log::Info("Add 1 Tick(Dolly)");
+					bKeyAddPressed = false;
 					break;
 				case VK_SUBTRACT:
-					DollyCam::AddDollyTick(-1);
-					Log::Info("Add -1 Tick(Dolly)");
+					bKeySubtractPressed = false;
 					break;
 				case VK_DELETE:
 					DollyCam::RemoveClosestNode();
@@ -209,6 +225,11 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 			break;
 		}
 	}
+
+	if (bKeyAddPressed || bKeySubtractPressed) {
+		DollyCam::AddDollyTick(bKeyAddPressed ? 1 : -1);
+	}
+
 	return(fEatKeystroke ? 1 : CallNextHookEx(NULL, nCode, wParam, lParam));
 }
 

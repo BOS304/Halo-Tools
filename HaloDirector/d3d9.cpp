@@ -172,7 +172,9 @@ void DrawCameraMarkers() {
 			DrawFilled(screenpos.x - outline_width_h, screenpos.y - outline_width_h, outline_width, outline_width, 255, 255, 255, 255);
 
 		////Draw Info
-		std::string text = std::to_string(current_node->t->time_relative) + '\n' + std::to_string(current_node->t->time_relative + DollyCam::GetBeginTime());
+		std::string text = std::to_string(current_node->t->time_relative) + '\n'
+			+ std::to_string(current_node->t->time_relative + DollyCam::GetBeginTime()) + '\n'
+			+ std::to_string(current_node->t->time_relative + DollyCam::GetGameTick());
 		
 		int textW = GetTextWidth((char*)text.c_str(), dx_Font);
 		DrawShadowString((char*)text.c_str(), screenpos.x - (((float)textW) / 2.0f), screenpos.y + (sh_width * 1.1), 0xFF, 0xFF, 0xFF, dx_Font);
@@ -191,7 +193,7 @@ void DrawCameraMarkers() {
 		DrawLine(screenpos.x, screenpos.y, forward_screen_pos.x, forward_screen_pos.y, 255, 255, 255, 255 / 2, 3);
 
 		//Draw current dolly position
-		if (DollyCam::BetweenMarkers())
+		if (DollyCam::BetweenMarkers() && !DollyCam::Playing())
 		{
 			screenpos = Math::WorldToScreen(DollyCam::GetPositionForCurrentTime(), windowWidth, windowHeight);
 			//screenpos = Math::FixAspectRatio(screenpos, windowWidth, windowHeight);

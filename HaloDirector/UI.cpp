@@ -77,8 +77,8 @@ void UI::Init()
 	ui_items[UI_GAMETICK] = UI_Item{"GameTick", &timescale_func};
 	ui_items[UI_DOLLYTICK] = UI_Item{"DollyTick", &timescale_func};
 	ui_items[UI_BEGIN_TIME] = UI_Item{"BeginTime", &timescale_func};
-	ui_items[UI_SKIP_NEXT_MARKER] = UI_Item{"Skip To Next Marker", &DollyCam::SkipToNextdMarker};
-	ui_items[UI_BACK_LAST_MARKER] = UI_Item{"Back To Last Marker", &DollyCam::BackToLastdMarker};
+	ui_items[UI_SKIP_NEXT_MARKER] = UI_Item{"Skip To Next Marker", &DollyCam::SkipToNextMarker};
+	ui_items[UI_BACK_LAST_MARKER] = UI_Item{"Back To Last Marker", &DollyCam::BackToLastMarker};
 	ui_items[UI_PLAY_DOLLY] = UI_Item{"Play Dolly", &DollyCam::Play};
 	ui_items[UI_RESTART] = UI_Item{"Restart Dolly", &DollyCam::Restart};
 	ui_items[UI_EDIT_MARKER] = UI_Item{"Edit Marker", &DollyCam::EditClosestMarker};

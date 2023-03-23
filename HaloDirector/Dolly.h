@@ -21,8 +21,8 @@ namespace DollyCam
 	void AddDollyTick(long long tick);
 	void AddMarkerGameTick();
 	void AddMarkerDollyTick();
-	void SkipToNextdMarker();
-	void BackToLastdMarker();
+	void SkipToNextMarker();
+	void BackToLastMarker();
 	void EditClosestMarker();
 	void SetMarker(CameraMarker* cameraMarker, long long time_tick);
 	bool RemoveNode(CamNode *node);

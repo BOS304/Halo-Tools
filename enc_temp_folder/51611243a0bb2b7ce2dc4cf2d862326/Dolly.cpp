@@ -237,7 +237,6 @@ namespace DollyCam
 		if (node == NULL)
 		{
 			Log::Info("Failed To Find Closest Node");
-			UI::Error(UI_DELETE_MARKER, "No Marker Selected");
 			return;
 		}
 		RemoveNode(node);
@@ -362,17 +361,12 @@ namespace DollyCam
 		if (!bEditReady)
 		{
 			EditNode = GetClosestNode();
-			if (EditNode == NULL) {
-				UI::Error(UI_EDIT_MARKER, "No Marker Selected");
-				return;
-			}
+			if (EditNode == NULL) return;
 			current_tick_dolly = EditNode->t->time_relative;
 			bEditReady = true;
-			UI::SetText(UI_EDIT_MARKER, "Editing Marker");
 		}
 		else
 		{
-			UI::SetText(UI_EDIT_MARKER, "Edit Marker");
 			RemoveNode(EditNode);
 			AddMarkerDollyTick();
 			bEditReady = false;
