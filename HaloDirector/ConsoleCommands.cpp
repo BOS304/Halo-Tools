@@ -54,7 +54,7 @@ void AddText(const char* buffer, int size)
 
 			if (has_key(segments[0]))
 			{
-				umap[segments[0]](0);
+				umap[segments[0]](NULL);
 			}
 			else {
 				Log::Error("Function not found: %s", segments[0]);
@@ -67,22 +67,7 @@ void AddText(const char* buffer, int size)
 
 			if (has_key(segments[0]))
 			{
-
-				int arg = 0;
-
-				try {
-					arg = std::stoi(segments[1]);
-				}
-				catch (std::invalid_argument const& e) {
-					Log::Error("Console Commands -> Invalid Argument");
-				}
-				catch (std::out_of_range const& e) {
-					Log::Error("Console Commands -> Out of Range");
-				}
-
-				umap[segments[0]](arg);
-
-
+				umap[segments[0]](segments[1].c_str());
 			}
 			else {
 				Log::Error("Function not found: %s", segments[0].c_str());
@@ -110,15 +95,17 @@ void ConsoleCommands::Add(std::string name, ConsoleCommand* function)
 	umap[name] = function;
 }
 
-void test(int arg)
+void help(const char* arg)
 {
-	Log::Info("Test Console Comamnd! Arg: %d", arg);
+	for (auto it = umap.begin(); it != umap.end(); it++)
+	{
+		Log::Info("%s", it->first);
+	}
 }
 
 void ConsoleCommands::Initialise()
 {
-	Add("cmd_test", &test);
-
+	ConsoleCommands::Add("help", help);
+	DollyCam::Console::Init();
 	CreateThread(0, 0, &CommandLoop, 0, 0, 0);
 }
-

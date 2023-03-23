@@ -232,6 +232,7 @@ namespace DollyCam
 
 	void RemoveClosestNode()
 	{
+		if (!Hooks::Initialised()) return;
 		bplay = false;
 		CamNode* node = GetClosestNode();
 		if (node == NULL)
@@ -359,6 +360,7 @@ namespace DollyCam
 
 	void EditClosestMarker()
 	{
+		if (!Hooks::Initialised()) return;
 		if (!bEditReady)
 		{
 			EditNode = GetClosestNode();
@@ -392,6 +394,7 @@ namespace DollyCam
 
 	void SkipToNextMarker()
 	{
+		if (!Hooks::Initialised()) return;
 		if (current_node == NULL) return;
 		if (current_node->next == NULL) // tail
 			current_tick_dolly = head->t->time_relative;
@@ -402,6 +405,7 @@ namespace DollyCam
 
 	void BackToLastMarker()
 	{
+		if (!!Hooks::Initialised()) return;
 		if (current_node == NULL) return;
 		if (current_node->prev == NULL) // head
 			current_tick_dolly = tail->t->time_relative;
@@ -412,6 +416,7 @@ namespace DollyCam
 
 	void Play()
 	{
+		if (!Hooks::Initialised()) return;
 		if (current_node == NULL || current_node == tail || current_tick_dolly < 0)
 		{
 			Restart();
@@ -421,9 +426,157 @@ namespace DollyCam
 	}
 	void Restart()
 	{
+		if (!Hooks::Initialised()) return;
 		current_node = head;
 		bplay = false;
 		current_tick_dolly = 0;
 		Update(Halo::p_Cam, Halo::p_fov);
+	}
+
+	namespace Console
+	{
+		void Save(const char* arg)
+		{
+			FILE* file = NULL;
+			char name[MAX_PATH];
+			std::string path(MAX_PATH, '0');
+
+			if (arg == NULL)
+			{
+				Log::Info("Received 0 Argument. Expected 1 Argument.");
+				return;
+			}
+
+			CreateDirectoryA("Dolly", NULL);
+
+			GetCurrentDirectoryA(MAX_PATH, name);
+			sprintf_s((LPSTR)path.c_str(), MAX_PATH, "%s\\Dolly\\%s.dolly",name, arg);
+			Log::Debug("arg:%s", arg);
+			Log::Debug("path:%s", path.c_str());
+
+			if (fopen_s(&file, path.c_str(), "wb"))
+			{
+				Log::Info("Open File:%s Failed!", arg);
+				return;
+			}
+
+			CamNode* node = head;
+			while (node != NULL)
+			{
+				fwrite(node->t, sizeof(CameraMarker), 1, file);
+				node = node->next;
+			}
+
+			fclose(file);
+		}
+
+		void Load(const char* arg)
+		{
+			FILE* file = NULL;
+			char name[MAX_PATH];
+			std::string path(MAX_PATH, '0');
+
+			if (arg == NULL)
+			{
+				Log::Info("Received 0 Argument. Expected 1 Argument.");
+				return;
+			}
+
+			CreateDirectoryA("Dolly", NULL);
+
+			GetCurrentDirectoryA(MAX_PATH, name);
+			sprintf_s((LPSTR)path.c_str(), MAX_PATH, "%s\\Dolly\\%s.dolly", name, arg);
+			Log::Debug("arg:%s", arg);
+			Log::Debug("path:%s", path.c_str());
+
+			if (fopen_s(&file, path.c_str(), "rb"))
+			{
+				Log::Info("Open File:%s Failed!", arg);
+				return;
+			}
+
+			RemoveAllNode();
+
+			CamNode* _new_node_;
+			CameraMarker marker, *_new_marker;
+
+			while (fread(&marker, sizeof(CameraMarker), 1, file))
+			{
+				_new_node_ = new CamNode;
+				_new_marker = new CameraMarker;
+
+				_new_node_->t = _new_marker;
+
+				memcpy(_new_marker, &marker, sizeof(CameraMarker));
+
+				if (head == NULL)
+				{
+					head = tail = _new_node_;
+					continue;
+				}
+
+				CamNode* _node = head;
+				while (_node->next != NULL)	_node = _node->next;
+				_node->next = _new_node_;
+				_new_node_->prev = _node;
+				tail = _new_node_;
+			}
+
+			fclose(file);
+		}
+
+		void SetBeginTime(const char* arg)
+		{
+			if (arg == NULL)
+			{
+				Log::Info("Received 0 Argument. Expected 1 Argument.");
+				return;
+			}
+
+			long long num = 0;
+
+			try {
+				num = std::stoll(arg);
+			}
+			catch (std::invalid_argument const& e) {
+				Log::Error("Console Commands -> Invalid Argument");
+			}
+			catch (std::out_of_range const& e) {
+				Log::Error("Console Commands -> Out of Range");
+			}
+
+			begin_tick = num;
+		}
+
+		void SetDollyTick(const char* arg)
+		{
+			if (arg == NULL)
+			{
+				Log::Info("Received 0 Argument. Expected 1 Argument.");
+				return;
+			}
+
+			long long num = 0;
+
+			try {
+				num = std::stoll(arg);
+			}
+			catch (std::invalid_argument const& e) {
+				Log::Error("Console Commands -> Invalid Argument");
+			}
+			catch (std::out_of_range const& e) {
+				Log::Error("Console Commands -> Out of Range");
+			}
+
+			current_tick_dolly = num;
+		}
+
+		void Init()
+		{
+			ConsoleCommands::Add("dolly_save_path", &Save);
+			ConsoleCommands::Add("dolly_load_path", &Load);
+			ConsoleCommands::Add("dolly_set_begin", &SetBeginTime);
+			ConsoleCommands::Add("dolly_set_tick", &SetDollyTick)
+		}
 	}
 }

@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-typedef void(ConsoleCommand)(int arg);
+typedef void(ConsoleCommand)(const char* arg);
 
 static class ConsoleCommands
 {

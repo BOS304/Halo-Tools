@@ -61,7 +61,7 @@ void command()
 }
 
 void timescale_func() {
-	if (IsBadWritePtr(Halo::p_timescale, sizeof(float))) return;
+	if (!Hooks::Initialised() || IsBadWritePtr(Halo::p_timescale, sizeof(float))) return;
 
 	*Halo::p_timescale += 0.1;
 	if (*Halo::p_timescale > 1.1)
