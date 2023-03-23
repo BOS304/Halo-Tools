@@ -1,40 +1,26 @@
 ﻿using Airyz;
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
-using System.Runtime.InteropServices;
-using System.Windows;
-using System.Windows.Interop;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace HaloTools
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainForm : Form
     {
-
-        public AiryzMemory halo;
-
-        public MainWindow()
+        public MainForm()
         {
             InitializeComponent();
         }
 
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
-        {
-            Environment.Exit(0);
-        }
-
-
-        [DllImport("user32.dll")]
-        static extern int SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
-        private void MinimiseButton_Click(object sender, RoutedEventArgs e)
-        {
-            SendMessage(new WindowInteropHelper(this).Handle, 0x0112, (IntPtr)0xF020, IntPtr.Zero);
-        }
-
-        private void InjectButton_Click(object sender, RoutedEventArgs e)
+        private void button1_Click(object sender, EventArgs e)
         {
             if (Process.GetProcessesByName("MCC-Win64-Shipping").Length > 0)
             {
