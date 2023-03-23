@@ -405,7 +405,7 @@ namespace DollyCam
 
 	void BackToLastMarker()
 	{
-		if (!!Hooks::Initialised()) return;
+		if (!Hooks::Initialised()) return;
 		if (current_node == NULL) return;
 		if (current_node->prev == NULL) // head
 			current_tick_dolly = tail->t->time_relative;
