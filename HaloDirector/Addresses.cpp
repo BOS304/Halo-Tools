@@ -68,7 +68,8 @@ char* Halo::ScanIn(const char* pattern, const char* mask, char* begin, unsigned 
 
 DWORD64 Halo::Scan(LPCWSTR modName, const char* pattern, const char* mask)
 {
-    HMODULE mod = GetModuleHandleW(modName);
+    HMODULE mod;
+    while ((mod = GetModuleHandleW(modName)) == 0);
     MODULEINFO info = MODULEINFO();
     GetModuleInformation(GetCurrentProcess(), mod, &info, sizeof(MODULEINFO));
     return (DWORD64)ScanIn(pattern, mask, (char*)info.lpBaseOfDll, info.SizeOfImage);
@@ -174,4 +175,43 @@ void Halo::Initialise() {
     Log::Info("Hwnd: %llx", pHwnd);
 
     Log::Info("---------- Finished Reading Addresses ----------");
+}
+
+namespace Halo
+{
+    namespace Console {
+        void SetFov(const char* arg)
+        {
+            if (arg == NULL)
+            {
+                Log::Info("Received 0 Argument. Expected 1 Argument.");
+                return;
+            }
+
+            if (!Hooks::Initialised())
+            {
+                Log::Info("Not in game!");
+                return;
+            }
+
+            float num = 0;
+
+            try {
+                num = std::stof(arg);
+            }
+            catch (std::invalid_argument const& e) {
+                Log::Error("Console Commands -> Invalid Argument");
+            }
+            catch (std::out_of_range const& e) {
+                Log::Error("Console Commands -> Out of Range");
+            }
+
+            *p_fov = num;
+        }
+
+        void Init()
+        {
+            ConsoleCommands::Add("camera_set_fov", SetFov);
+        }
+    }
 }

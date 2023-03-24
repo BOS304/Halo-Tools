@@ -103,9 +103,16 @@ void help(const char* arg)
 	}
 }
 
+void cls(const char* arg)
+{
+	system("cls");
+}
+
 void ConsoleCommands::Initialise()
 {
 	ConsoleCommands::Add("help", help);
+	ConsoleCommands::Add("cls", cls);
 	DollyCam::Console::Init();
+	Halo::Console::Init();
 	CreateThread(0, 0, &CommandLoop, 0, 0, 0);
 }

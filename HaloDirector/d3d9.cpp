@@ -274,7 +274,7 @@ void DrawControls() {
 	float menuW = widest_text + (textSpacing * 2);
 
 	//Draw Background
-	DrawFilled(borderW, centerH - (menuHeight / 2), menuW, menuHeight, 64, 123, 165, 200);
+	DrawFilled(borderW, centerH - (menuHeight / 2), menuW, menuHeight, 0, 0, 0, 255);
 
 	DrawShadowString((char*)"F2: Toggle Overlay", borderW, centerH - (menuHeight / 2) - fontHeight - textSpacing, 255, 255, 255, dx_Font);
 

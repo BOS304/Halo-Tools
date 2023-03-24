@@ -25,6 +25,11 @@ namespace Halo
 	void Initialise();
 
 	char* ScanIn(const char* pattern, const char* mask, char* begin, unsigned int size);
+
+	namespace Console
+	{
+		void Init();
+	}
 };
 
 namespace mem
