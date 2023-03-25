@@ -1,23 +1,13 @@
 #include "Dolly.h"
 #include <chrono>
 #include "UI.h"
-using namespace Halo;
-
-//void Dolly::removeSelected()
-//{
-//	int index = GetSelectedMarkerIndex();
-//	if (index != -1)
-//		removeMarker(index);
-//	else
-//		UI::Error(UI_DELETE_MARKER, "No Marker Selected");
-//}
 
 namespace DollyCam
 {
 	CamNode* head = NULL, *tail = NULL;
 	CamNode* current_node = NULL;
 	bool bplay = false;
-	bool bEditReady = false;
+	bool bEditing = false, bEditReady = false;
 	bool bSync = false;
 
 	long long speed_tick = 60;
@@ -36,6 +26,7 @@ namespace DollyCam
 	CamNode* GetHeadNode() { return head; }
 	CamNode* GetTailNode() { return tail; }
 	bool Playing() { return bplay; }
+	bool Editing() { return bEditing; }
 
 	void Init(uintptr_t module, uintptr_t teb)
 	{
@@ -201,6 +192,7 @@ namespace DollyCam
 
 	bool RemoveNode(CamNode* node)
 	{
+		bEditing = true;
 		if (node == NULL) return false;
 
 		if (node->prev != NULL) node->prev->next = node->next;
@@ -210,11 +202,14 @@ namespace DollyCam
 		delete node->t;
 		delete node;
 		UpdateDollyTime();
+		bEditing = false;
 		return true;
 	}
 
 	void RemoveAllNode()
 	{
+		bEditing = true;
+
 		bplay = false;
 		CamNode* node = head;
 		CamNode* next = NULL;
@@ -230,6 +225,8 @@ namespace DollyCam
 		current_tick_dolly = 0;
 		bEditReady = false;
 		gameTickTime = 0;
+
+		bEditing = false;
 	}
 
 	void RemoveClosestNode()
@@ -249,6 +246,9 @@ namespace DollyCam
 	bool BetweenMarkers()
 	{
 		CamNode* node = head;
+
+		if (bEditing) return false;
+
 		while (node != NULL)
 		{
 			if (node->next != NULL)
@@ -264,6 +264,8 @@ namespace DollyCam
 		CamNode* m0, * m1, * m2, * m3;
 		CamNode* node = NULL;
 		int i = 0;
+
+		current_node = GetCurrentNode();
 
 		if (current_node == NULL || current_node->next == NULL) return Vector3();
 
@@ -322,13 +324,13 @@ namespace DollyCam
 	{
 		CamNode* node, *current_node = NULL;
 
-		if (head == NULL) return NULL;
+		if (bEditing) return NULL;
 
 		if (current_tick_dolly == 0)// beginning
 		{
 			current_node = head;
 		}
-		else if (current_tick_dolly > tail->t->time_relative || current_tick_dolly < 0)
+		else if (head == NULL || current_tick_dolly > tail->t->time_relative || current_tick_dolly < 0)
 		{
 			current_node = NULL;
 		}
@@ -386,13 +388,13 @@ namespace DollyCam
 	}
 	void SetMarker(CameraMarker* cameraMarker, long long time_tick)
 	{
-		if (p_Cam == NULL || IsBadWritePtr(Halo::p_Cam,sizeof(Camera))) return;
+		if (Halo::p_Cam == NULL || IsBadWritePtr(Halo::p_Cam,sizeof(Camera))) return;
 		Camera c = *Halo::p_Cam;
 
 		cameraMarker->time_relative = time_tick - begin_tick;
 		cameraMarker->position = c.position;
 		cameraMarker->forward = Math::GetForwardPosition(0.5f, c.position, c.rotation);
-		cameraMarker->fov = *p_fov;
+		cameraMarker->fov = *Halo::p_fov;
 		cameraMarker->roll = c.rotation.z;
 	}
 
@@ -429,7 +431,7 @@ namespace DollyCam
 		}
 		bplay = !bplay;
 		if (bSync && Halo::p_timescale) *Halo::p_timescale = bplay ? 1.0f : 0.0f;
-		Log::Debug("Camera Address:%llX FOV Address:%llX\n", p_Cam, p_fov);
+		Log::Debug("Camera Address:%llX FOV Address:%llX\n", Halo::p_Cam, Halo::p_fov);
 	}
 	void Restart()
 	{

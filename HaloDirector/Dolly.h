@@ -36,6 +36,7 @@ namespace DollyCam
 	CamNode* GetTailNode();
 	CamNode* GetNodeByIndex(size_t index);
 	bool Playing();
+	bool Editing();
 	void Play();
 	void Restart();
 	void Init(uintptr_t module, uintptr_t teb);

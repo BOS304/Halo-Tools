@@ -118,7 +118,7 @@ void DrawCameraMarkers() {
 
 	DollyCam::CamNode* current_node = DollyCam::GetHeadNode();
 
-	while (current_node != NULL)
+	while (current_node != NULL && !DollyCam::Editing())
 	{
 		DollyCam::CamNode* m0, * m1, * m2, * m3;
 		DollyCam::CamNode* node = NULL;
@@ -380,8 +380,8 @@ int Render()
 	{
 		if (Settings::draw_camera_path && Hooks::Initialised())
 		{
-			DrawControls();
 			DrawCameraMarkers();
+			DrawControls();
 		}
 	}
 
