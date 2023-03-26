@@ -302,6 +302,13 @@ extern "C" void HookUninit(void);
 
 bool bdraw = false;
 
+// 1,2835,0,0
+#define OFFSET_pTarget_0 0xB2808
+#define OFFSET_pTarget_1 0x208270
+#define OFFSET_pTarget_2 0xB2ED6
+#define OFFSET_p_fov 0x29D2BB0
+#define OFFSET_p_timescale 0x1E9B69C
+
 DWORD WINAPI HookThread(LPVOID lpReserved)
 {
 	SetDraw(&bdraw);
@@ -313,13 +320,15 @@ DWORD WINAPI HookThread(LPVOID lpReserved)
 	{
 		hModule = (uintptr_t)GetModuleHandleW(L"halo3.dll");
 		if (!hModule) continue;
-		pTarget_0 = hModule + 0xB1098;
-		pTarget_1 = hModule + 0x207C10;
-		pTarget_2 = hModule + 0xB1764;
+		pTarget_0 = hModule + OFFSET_pTarget_0;
+		pTarget_1 = hModule + OFFSET_pTarget_1;
+		pTarget_2 = hModule + OFFSET_pTarget_2;
+		Halo::p_fov = (float*)(hModule + OFFSET_p_fov + 0x8 + 0x6C);
+		Halo::p_timescale = (float*)(hModule + OFFSET_p_timescale);
+
 		if (*(BYTE*)pTarget_0 != 0xE9)
 		{
 			bInit_0 = false;
-			Halo::Initialise();
 			MH_DisableHook((LPVOID)pTarget_0);
 			MH_CreateHook((LPVOID)pTarget_0, HookDolly, (LPVOID*)&ppOriginal_0);
 			MH_EnableHook((LPVOID)pTarget_0);
@@ -348,7 +357,7 @@ bool Hooks::Initialised()
 {
 	hModule = (uintptr_t)GetModuleHandleW(L"halo3.dll");
 	if (!hModule) return false;
-	pTarget_0 = hModule + 0xB1098;
+	pTarget_0 = hModule + OFFSET_pTarget_0;
 	return (*(BYTE*)pTarget_0 == 0xE9) && bInit_0;
 }
 
