@@ -34,7 +34,15 @@ namespace DollyCam
 		TEBAddress = (__int64*)teb;
 		TlsIndex = *(__int32*)(hModule + 0x98CB9C);
 		p_gameTickTime = (unsigned long*)(*(__int64*)(*(__int64*)(TEBAddress + TlsIndex) + 0xD0i64) + 0xC);
+		Halo::p_Cam = (Camera*)(*(__int64*)(*(__int64*)(TEBAddress + TlsIndex) + 0x190i64) + 0x8);
+		Log::Debug("Camera Address:%llX Game Tick Address:%llX", Halo::p_Cam, p_gameTickTime);
+		RemoveAllNode();
+	}
 
+	void Uninit()
+	{
+		p_gameTickTime = 0;
+		Halo::p_Cam = 0;
 		RemoveAllNode();
 	}
 
@@ -431,7 +439,6 @@ namespace DollyCam
 		}
 		bplay = !bplay;
 		if (bSync && Halo::p_timescale) *Halo::p_timescale = bplay ? 1.0f : 0.0f;
-		Log::Debug("Camera Address:%llX FOV Address:%llX\n", Halo::p_Cam, Halo::p_fov);
 	}
 	void Restart()
 	{
@@ -461,8 +468,6 @@ namespace DollyCam
 
 			GetCurrentDirectoryA(MAX_PATH, name);
 			sprintf_s((LPSTR)path.c_str(), MAX_PATH, "%s\\Dolly\\%s.dolly",name, arg);
-			Log::Debug("arg:%s", arg);
-			Log::Debug("path:%s", path.c_str());
 
 			if (fopen_s(&file, path.c_str(), "wb"))
 			{
@@ -477,6 +482,7 @@ namespace DollyCam
 				node = node->next;
 			}
 
+			Log::Info("Save Success!\nPath:%s", path.c_str());
 			fclose(file);
 		}
 
@@ -496,8 +502,6 @@ namespace DollyCam
 
 			GetCurrentDirectoryA(MAX_PATH, name);
 			sprintf_s((LPSTR)path.c_str(), MAX_PATH, "%s\\Dolly\\%s.dolly", name, arg);
-			Log::Debug("arg:%s", arg);
-			Log::Debug("path:%s", path.c_str());
 
 			if (fopen_s(&file, path.c_str(), "rb"))
 			{
@@ -533,6 +537,7 @@ namespace DollyCam
 				tail = _new_node_;
 			}
 
+			Log::Info("Load Success!\nPath:%s", path.c_str());
 			fclose(file);
 		}
 

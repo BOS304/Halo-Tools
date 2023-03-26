@@ -79,6 +79,9 @@ bool is_foreground() {
 
 LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	if (nCode >= 0) {
+		if (!Halo::p_Cam || !Halo::p_fov || !Hooks::Initialised() || IsBadWritePtr(Halo::p_Cam, sizeof(Camera)) || IsBadWritePtr(Halo::p_fov, sizeof(float)))
+			return CallNextHookEx(0, nCode, wParam, lParam);
+
 		if (wParam == WM_MOUSEWHEEL)
 		{
 			MSLLHOOKSTRUCT* pMhs = (MSLLHOOKSTRUCT*)lParam;
@@ -86,9 +89,6 @@ LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 			HWND foreground = GetForegroundWindow();
 			DWORD foregroundID = 0;
 			GetWindowThreadProcessId(foreground, &foregroundID);
-
-			if (!Halo::p_Cam || !Halo::p_fov || !Hooks::Initialised() || IsBadWritePtr(Halo::p_Cam, sizeof(Camera)) || IsBadWritePtr(Halo::p_fov, sizeof(float)))
-				return CallNextHookEx(0, nCode, wParam, lParam);
 
 			if (foregroundID == current_process)
 			{
@@ -167,14 +167,20 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 			switch (p->vkCode)
 			{
 			case VK_ADD:
-				DollyCam::AddDollyTick(1);
-				Log::Info("Add 1 Tick(Dolly)");
-				bKeyAddPressed = true;
+				if (!bKeyAddPressed)
+				{
+					DollyCam::AddDollyTick(1);
+					Log::Info("Add 1 Tick(Dolly)");
+					bKeyAddPressed = true;
+				}
 				break;
 			case VK_SUBTRACT:
-				DollyCam::AddDollyTick(-1);
-				Log::Info("Add -1 Tick(Dolly)");
-				bKeySubtractPressed = true;
+				if (!bKeySubtractPressed)
+				{
+					DollyCam::AddDollyTick(-1);
+					Log::Info("Add -1 Tick(Dolly)");
+					bKeySubtractPressed = true;
+				}
 				break;
 			}
 			break;
@@ -288,7 +294,7 @@ void Dolly_Hook() {
 
 void Uninit_Hook() {
 	bInit_0 = false;
-	DollyCam::RemoveAllNode();
+	DollyCam::Uninit();
 }
 
 extern "C" void SetDraw(void* bdraw);
@@ -311,9 +317,7 @@ bool bdraw = false;
 
 DWORD WINAPI HookThread(LPVOID lpReserved)
 {
-	SetDraw(&bdraw);
 	SetDolly(Dolly_Hook, &ppOriginal_0);
-	SetCam(&p_Cam, &ppOriginal_1);
 	SetUninit(Uninit_Hook, &ppOriginal_2);
 	MH_Initialize();
 	while (true)
@@ -321,7 +325,6 @@ DWORD WINAPI HookThread(LPVOID lpReserved)
 		hModule = (uintptr_t)GetModuleHandleW(L"halo3.dll");
 		if (!hModule) continue;
 		pTarget_0 = hModule + OFFSET_pTarget_0;
-		pTarget_1 = hModule + OFFSET_pTarget_1;
 		pTarget_2 = hModule + OFFSET_pTarget_2;
 		Halo::p_fov = (float*)(hModule + OFFSET_p_fov + 0x8 + 0x6C);
 		Halo::p_timescale = (float*)(hModule + OFFSET_p_timescale);
@@ -332,9 +335,6 @@ DWORD WINAPI HookThread(LPVOID lpReserved)
 			MH_DisableHook((LPVOID)pTarget_0);
 			MH_CreateHook((LPVOID)pTarget_0, HookDolly, (LPVOID*)&ppOriginal_0);
 			MH_EnableHook((LPVOID)pTarget_0);
-			MH_DisableHook((LPVOID)pTarget_1);
-			MH_CreateHook((LPVOID)pTarget_1, HookCamera, (LPVOID*)&ppOriginal_1);
-			MH_EnableHook((LPVOID)pTarget_1);
 			MH_DisableHook((LPVOID)pTarget_2);
 			MH_CreateHook((LPVOID)pTarget_2, HookUninit, (LPVOID*)&ppOriginal_2);
 			MH_EnableHook((LPVOID)pTarget_2);
@@ -359,14 +359,4 @@ bool Hooks::Initialised()
 	if (!hModule) return false;
 	pTarget_0 = hModule + OFFSET_pTarget_0;
 	return (*(BYTE*)pTarget_0 == 0xE9) && bInit_0;
-}
-
-bool Hooks::Draw()
-{
-	return bdraw;
-}
-
-void Hooks::SetDraw(bool b)
-{
-	bdraw = b;
 }

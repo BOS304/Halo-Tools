@@ -100,8 +100,6 @@ void Halo::Initialise() {
     Log::Info("---------- Getting HWND -----------");
     pHwnd = find_main_window(GetCurrentProcessId());
     Log::Info("Hwnd: %llx", pHwnd);
-
-    Log::Info("---------- Finished Reading Addresses ----------");
 }
 
 namespace Halo

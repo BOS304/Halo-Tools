@@ -17,22 +17,11 @@ DWORD WINAPI Initialise(LPVOID Param) {
 
     std::time_t result = std::time(nullptr);
 
-    //1611974668 = January 30, 2020
-    //if (result < 1611974668) {
-    //    Log::Info("Current Time: %d", result);
-
     ConsoleCommands::Initialise();
     Halo::Initialise();
-    //Dolly::Initialise();
     UI::Init();
     Hooks::Initialise();
     Drawing::Init();
-
-    //}
-    //else {
-    //    Log::Error("Beta has now expired. Please contact Airyz to request an extension, or wait until the final release");
-    //}
-
 
     return 0;
 }
