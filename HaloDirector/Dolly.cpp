@@ -32,8 +32,8 @@ namespace DollyCam
 	{
 		hModule = module;
 		TEBAddress = (__int64*)teb;
-		TlsIndex = *(__int32*)(hModule + 0xA2A09C);
-		p_gameTickTime = (unsigned long*)(*(__int64*)(*(__int64*)(TEBAddress + TlsIndex) + 0xC8i64) + 0xC);
+		TlsIndex = *(__int32*)(hModule + 0x98CB9C);
+		p_gameTickTime = (unsigned long*)(*(__int64*)(*(__int64*)(TEBAddress + TlsIndex) + 0xD0i64) + 0xC);
 
 		RemoveAllNode();
 	}
