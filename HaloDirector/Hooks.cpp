@@ -79,6 +79,9 @@ bool is_foreground() {
 
 LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	if (nCode >= 0) {
+		if (!Halo::p_Cam || !Halo::p_fov || !Hooks::Initialised() || IsBadWritePtr(Halo::p_Cam, sizeof(Camera)) || IsBadWritePtr(Halo::p_fov, sizeof(float)))
+			return CallNextHookEx(0, nCode, wParam, lParam);
+
 		if (wParam == WM_MOUSEWHEEL)
 		{
 			MSLLHOOKSTRUCT* pMhs = (MSLLHOOKSTRUCT*)lParam;
@@ -86,9 +89,6 @@ LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 			HWND foreground = GetForegroundWindow();
 			DWORD foregroundID = 0;
 			GetWindowThreadProcessId(foreground, &foregroundID);
-
-			if (!Halo::p_Cam || !Halo::p_fov || !Hooks::Initialised() || IsBadWritePtr(Halo::p_Cam, sizeof(Camera)) || IsBadWritePtr(Halo::p_fov, sizeof(float)))
-				return CallNextHookEx(0, nCode, wParam, lParam);
 
 			if (foregroundID == current_process)
 			{
