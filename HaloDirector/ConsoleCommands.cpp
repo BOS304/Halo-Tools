@@ -50,8 +50,6 @@ void AddText(const char* buffer, int size)
 
 		if (segments.size() == 1)
 		{
-			Log::Info("Function: %s", segments[0].c_str());
-
 			if (has_key(segments[0]))
 			{
 				umap[segments[0]](NULL);
@@ -62,9 +60,6 @@ void AddText(const char* buffer, int size)
 		}
 		else if (segments.size() == 2)
 		{
-			Log::Info("Function: %s", segments[0].c_str());
-			Log::Info("Argument: %s", segments[1].c_str());
-
 			if (has_key(segments[0]))
 			{
 				umap[segments[0]](segments[1].c_str());

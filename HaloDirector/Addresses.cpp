@@ -97,84 +97,9 @@ bool mem::PatchAOB(void* dst, void* src, unsigned int size)
 }
 
 void Halo::Initialise() {
-    //Find all addresses needed
-
-    Log::Info("---------- Scanning for server time ----------");
-    
-    // This signature is located at: 18047418C in the old halo3_v100.ida64 file. Tested to be working in two different version of the game.
-    // Hopefully the only thing that may change is the 0x1D Offset.
-    DWORD64 temp = 0;
-
-    Log::Info("---------- Scanning for Timescale ----------");
-
-    temp = Scan(L"halo3.dll", "\xf3\x0f\x10\x05\x00\x00\x00\x00\x41\x0f\x2e\xc1\x7a", "xxxx????xxxxx") + 4;
-    
-    if (temp < 0x1000)
-    {
-        Log::Error("Unable to find address: p_timescale");
-    }
-    else {
-        Log::Info("Found Address: %llx", temp);
-
-        p_timescale = (float*)(temp + 4 + *(int*)temp);
-
-        Log::Info("Calculated Address: %llx", p_timescale);
-        Log::Info("Current Timescale: %f", *p_timescale);
-    }
-
-    Log::Info("---------- Scanning for FOV: ----------");
-
-    //1801746C1 in 3065
-    temp = Scan(L"halo3.dll",
-        "\x48\x69\xc8\x00\x00\x00\x00\x48\x8d\x05\x00\x00\x00\x00\x48\x03\xc8\xe8\x00\x00\x00\x00\x84\xc0\x75\x00\x8a\x01\xc0\xe8\x00\xa8\x00\x74\x00\x48\x83\xc1\x00\x74\x00\x48\x83\x3d\x00\x00\x00\x00\x00\x74\x00\xf3\x0f\x10\x49\x00\x0f\x2e\x0d\x00\x00\x00\x00\x7a\x00\x74\x00\x0f\x28\xc1\xf3\x0f\x59\x05\x00\x00\x00\x00\xe8\x00\x00\x00\x00\x84\xc0\x75\x00\x0f\x28\xc2\x48\x83\xc4\x00\xc3 ",
-        "xxx????xxx????xxxx????xxx?xxxx?x?x?xxx?x?xxx?????x?xxxx?xxx????x?x?xxxxxxx????x????xxx?xxxxxx?x") + 10;
-
-    //~v2845 
-    //temp = Scan(L"halo3.dll", 
-    //    "\x48\x69\xc8\x00\x00\x00\x00\x48\x8d\x05\x00\x00\x00\x00\x48\x03\xc8\xe8\x00\x00\x00\x00\x84\xc0\x75\x00\x8a\x01\xc0\xe8\x00\xa8\x00\x74\x00\x48\x83\xc1\x00\x74\x00\x48\x83\x3d\x00\x00\x00\x00\x00\x74\x00\xf3\x0f\x10\x49\x00\x0f\x2e\x0d\x00\x00\x00\x00\x7a\x00\x74\x00\x0f\x28\xc1\xf3\x0f\x59\x05\x00\x00\x00\x00\xe8\x00\x00\x00\x00\x84\xc0\x75\x00\xf3\x0f\x10\x05\x00\x00\x00\x00\x48\x83\xc4\x00\xc3\xcc ", 
-    //    "xxx????xxx????xxxx????xxx?xxxx?x?x?xxx?x?xxx?????x?xxxx?xxx????x?x?xxxxxxx????x????xxx?xxxx????xxx?xx") + 10;
-
-    if (temp < 0x1000)
-    {
-        Log::Error("Unable to find address: FOV");
-    }
-    else {
-
-        Log::Info("Found : %llx", temp);
-
-        p_fov = (float*)(temp + 0x78 + *(int*)temp);
-
-        Log::Info("Offset: %llx", *(int*)temp);
-        Log::Info("Address calculated: %llx", p_fov);
-        Log::Info("Current FOV: %f", *p_fov);
-    }
-
-
-    // Finding Camera Address in cheat engine:
-    // Scan for 'f3 0f 59 ? ? ? ? ? f3 0f 11 ? ? f3 0f 59 ? f3 0f 58' (1803D4DB3) in halo3_v100.i64                 1 result only: ('f3 41 ? ? ? f3 0f 59 ? ? ? ? ? f3 0f 11 ? ? f3 0f 59 ? f3 0f 58')
-    // Break and trace on 'movss [rsi+28],xmm0' camera coord is in xmm0
-    Log::Info("---------- Scanning for Camera: ----------");
-
-    //old pattern for ~2282 build
-    //CameraHookAddress = Scan(L"halo3.dll", "\xf3\x41\x00\x00\x00\xf3\x0f\x59\x00\x00\x00\x00\x00\xf3\x0f\x11\x00\x00\xf3\x0f\x59\x00\xf3\x0f\x58", "xx???xxx?????xxx??xxx?xxx") + 13;
-
-	//good as of 2845
-    //CameraHookAddress = Scan(L"halo3.dll", "\xf3\x0F\x00\x00\xf3\x0f\x11\x00\x00\xf3\x0f\x59\x00\xf3\x0f\x59\x00\xf3\x0f\x58", "xx??xxx??xxx?xxx?xxx") + 4;
-    //
-    //if (CameraHookAddress < 0x1000)
-    //{
-    //    Log::Error("Unable to find address: CameraHookAddress");
-    //}
-    //else {
-    //    Log::Info("Camera Hook Address: %llx", CameraHookAddress);
-    //}
-
-
     Log::Info("---------- Getting HWND -----------");
     pHwnd = find_main_window(GetCurrentProcessId());
     Log::Info("Hwnd: %llx", pHwnd);
-
-    Log::Info("---------- Finished Reading Addresses ----------");
 }
 
 namespace Halo

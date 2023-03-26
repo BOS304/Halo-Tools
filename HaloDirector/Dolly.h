@@ -40,5 +40,6 @@ namespace DollyCam
 	void Play();
 	void Restart();
 	void Init(uintptr_t module, uintptr_t teb);
+	void Uninit();
 	namespace Console { void Init(); }
 }

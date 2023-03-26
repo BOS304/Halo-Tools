@@ -167,14 +167,20 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 			switch (p->vkCode)
 			{
 			case VK_ADD:
-				DollyCam::AddDollyTick(1);
-				Log::Info("Add 1 Tick(Dolly)");
-				bKeyAddPressed = true;
+				if (!bKeyAddPressed)
+				{
+					DollyCam::AddDollyTick(1);
+					Log::Info("Add 1 Tick(Dolly)");
+					bKeyAddPressed = true;
+				}
 				break;
 			case VK_SUBTRACT:
-				DollyCam::AddDollyTick(-1);
-				Log::Info("Add -1 Tick(Dolly)");
-				bKeySubtractPressed = true;
+				if (!bKeySubtractPressed)
+				{
+					DollyCam::AddDollyTick(-1);
+					Log::Info("Add -1 Tick(Dolly)");
+					bKeySubtractPressed = true;
+				}
 				break;
 			}
 			break;
@@ -288,7 +294,7 @@ void Dolly_Hook() {
 
 void Uninit_Hook() {
 	bInit_0 = false;
-	DollyCam::RemoveAllNode();
+	DollyCam::Uninit();
 }
 
 extern "C" void SetDraw(void* bdraw);
@@ -302,30 +308,33 @@ extern "C" void HookUninit(void);
 
 bool bdraw = false;
 
+// 1,2835,0,0
+#define OFFSET_pTarget_0 0xB1098
+#define OFFSET_pTarget_1 0x207C10
+#define OFFSET_pTarget_2 0xB1764
+#define OFFSET_p_fov 0x2B24690
+#define OFFSET_p_timescale 0x1F20A2C
+
 DWORD WINAPI HookThread(LPVOID lpReserved)
 {
-	SetDraw(&bdraw);
 	SetDolly(Dolly_Hook, &ppOriginal_0);
-	SetCam(&p_Cam, &ppOriginal_1);
 	SetUninit(Uninit_Hook, &ppOriginal_2);
 	MH_Initialize();
 	while (true)
 	{
 		hModule = (uintptr_t)GetModuleHandleW(L"halo3.dll");
 		if (!hModule) continue;
-		pTarget_0 = hModule + 0xB1098;
-		pTarget_1 = hModule + 0x207C10;
-		pTarget_2 = hModule + 0xB1764;
+		pTarget_0 = hModule + OFFSET_pTarget_0;
+		pTarget_2 = hModule + OFFSET_pTarget_2;
+		Halo::p_fov = (float*)(hModule + OFFSET_p_fov + 0x8 + 0x6C);
+		Halo::p_timescale = (float*)(hModule + OFFSET_p_timescale);
+
 		if (*(BYTE*)pTarget_0 != 0xE9)
 		{
 			bInit_0 = false;
-			Halo::Initialise();
 			MH_DisableHook((LPVOID)pTarget_0);
 			MH_CreateHook((LPVOID)pTarget_0, HookDolly, (LPVOID*)&ppOriginal_0);
 			MH_EnableHook((LPVOID)pTarget_0);
-			MH_DisableHook((LPVOID)pTarget_1);
-			MH_CreateHook((LPVOID)pTarget_1, HookCamera, (LPVOID*)&ppOriginal_1);
-			MH_EnableHook((LPVOID)pTarget_1);
 			MH_DisableHook((LPVOID)pTarget_2);
 			MH_CreateHook((LPVOID)pTarget_2, HookUninit, (LPVOID*)&ppOriginal_2);
 			MH_EnableHook((LPVOID)pTarget_2);
@@ -348,16 +357,6 @@ bool Hooks::Initialised()
 {
 	hModule = (uintptr_t)GetModuleHandleW(L"halo3.dll");
 	if (!hModule) return false;
-	pTarget_0 = hModule + 0xB1098;
+	pTarget_0 = hModule + OFFSET_pTarget_0;
 	return (*(BYTE*)pTarget_0 == 0xE9) && bInit_0;
-}
-
-bool Hooks::Draw()
-{
-	return bdraw;
-}
-
-void Hooks::SetDraw(bool b)
-{
-	bdraw = b;
 }
