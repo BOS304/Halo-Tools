@@ -281,6 +281,7 @@ bool bInit_0 = false;
 DWORD64 DollyHook_Return;
 
 extern "C" __int64 GetTeb(void);
+extern "C" __int32 GetTick(void);
 
 void Dolly_Hook() {
 	if (!bInit_0)
@@ -289,7 +290,11 @@ void Dolly_Hook() {
 		DollyCam::Init(hModule, TEBAddress);
 		bInit_0 = true;
 	}
-	DollyCam::MainFunction();
+	if (DollyCam::IsSync())
+		for (int i = 0; i < GetTick(); i++)
+			DollyCam::MainFunction();
+	else
+		DollyCam::MainFunction();
 }
 
 void Uninit_Hook() {

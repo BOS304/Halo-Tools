@@ -27,6 +27,7 @@ namespace DollyCam
 	CamNode* GetTailNode() { return tail; }
 	bool Playing() { return bplay; }
 	bool Editing() { return bEditing; }
+	bool IsSync() { return bSync; }
 
 	void Init(uintptr_t module, uintptr_t teb)
 	{

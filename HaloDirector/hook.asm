@@ -11,6 +11,7 @@ CameraOri qword 0
 p_UninitFunc qword 0
 p_UninitOri qword 0
 
+tick dword 0
 .code
 
 GetTeb proc
@@ -37,6 +38,7 @@ SetUninit proc
 SetUninit endp
 
 HookDolly proc
+	mov tick, ebx
 	mov rax, [p_DollyOri]
 	mov rax, [rax]
 	push rax
@@ -56,5 +58,10 @@ HookUninit proc
 	push rax
 	jmp [p_UninitFunc]
 HookUninit endp
+
+GetTick proc
+	mov eax, tick
+	ret
+GetTick endp
 
 end
