@@ -33,7 +33,7 @@ namespace DollyCam
 	{
 		hModule = module;
 		TEBAddress = (__int64*)teb;
-		TlsIndex = *(__int32*)(hModule + 0xA2A09C);
+		TlsIndex = *(__int32*)(hModule + 0xA38F9C);
 		p_gameTickTime = (unsigned long*)(*(__int64*)(*(__int64*)(TEBAddress + TlsIndex) + 0xC8i64) + 0xC);
 		Halo::p_Cam = (Camera*)(*(__int64*)(*(__int64*)(TEBAddress + TlsIndex) + 0x188i64) + 0x8);
 		Log::Debug("Camera Address:%llX Game Tick Address:%llX", Halo::p_Cam, p_gameTickTime);

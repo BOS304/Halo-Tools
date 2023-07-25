@@ -313,12 +313,12 @@ extern "C" void HookUninit(void);
 
 bool bdraw = false;
 
-// 1,2835,0,0
-#define OFFSET_pTarget_0 0xB1098
-#define OFFSET_pTarget_1 0x207C10
-#define OFFSET_pTarget_2 0xB1764
-#define OFFSET_p_fov 0x2B24690
-#define OFFSET_p_timescale 0x1F20A2C
+// 1.3251.0
+#define OFFSET_pTarget_0 0xB2793
+#define OFFSET_pTarget_1 0x215494
+#define OFFSET_pTarget_2 0xB2E83
+#define OFFSET_p_fov 0x2D3DD70
+#define OFFSET_p_timescale 0x2136154
 
 DWORD WINAPI HookThread(LPVOID lpReserved)
 {
