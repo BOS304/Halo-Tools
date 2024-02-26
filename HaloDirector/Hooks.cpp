@@ -2,6 +2,7 @@
 #include "StdInc.h"
 #include "UI.h"
 #include "MinHook.h"
+#include "offset.h"
 
 
 using namespace Halo;
@@ -310,15 +311,7 @@ extern "C" void HookDolly(void);
 extern "C" void HookCamera(void);
 extern "C" void HookUninit(void);
 
-
 bool bdraw = false;
-
-// 1.3251.0
-#define OFFSET_pTarget_0 0xB2793
-#define OFFSET_pTarget_1 0x215494
-#define OFFSET_pTarget_2 0xB2E83
-#define OFFSET_p_fov 0x2D3DD70
-#define OFFSET_p_timescale 0x2136154
 
 DWORD WINAPI HookThread(LPVOID lpReserved)
 {

@@ -9,7 +9,7 @@ MSG Message;
 RECT WindowRect, ClientRect;
 int windowWidth, windowHeight;
 int clientWidth = 1600, clientHeight = 900;
-int borderWidth, borderHeight; // Grenz Größen
+int borderWidth, borderHeight; // Grenz Grï¿½ï¿½en
 
 
 char lWindowName[256] = "Overlay";

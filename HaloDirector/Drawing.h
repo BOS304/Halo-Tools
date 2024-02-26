@@ -14,7 +14,7 @@
 #pragma comment(lib, "dwmapi.lib")
 
 extern int windowWidth; // Spielfenster Breite
-extern int windowHeight; // Spielfenster Höhe
+extern int windowHeight; // Spielfenster Hï¿½he
 extern char lWindowName[256]; // Overlay Name
 extern HWND hWnd; // Overlay Handle
 extern char tWindowName[256]; // Ziel Name
